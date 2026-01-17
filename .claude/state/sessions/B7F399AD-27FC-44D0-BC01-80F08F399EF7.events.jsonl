@@ -1,0 +1,4 @@
+{"id":"event-000001","type":"session.start","ts":"2026-01-17T20:45:40Z","state":"initialized"}
+{"id":"event-000002","type":"session.resume","ts":"2026-01-17T20:45:40Z","state":"initialized"}
+{"id":"event-000003","type":"tool.write","ts":"2026-01-17T20:57:05Z","data":{"file_path":"/Users/fukutomi/Library/CloudStorage/OneDrive-NITech/obsidian/lab/labmemo/研究方針.md"}}
+{"id":"event-000004","type":"session.stop","ts":"2026-01-17T20:57:10Z","state":"stopped"}

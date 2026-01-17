@@ -1,0 +1,45 @@
+{
+  "session_id": "B7F399AD-27FC-44D0-BC01-80F08F399EF7",
+  "parent_session_id": null,
+  "state": "stopped",
+  "state_version": 1,
+  "started_at": "2026-01-17T20:45:40Z",
+  "updated_at": "2026-01-17T20:57:10Z",
+  "resume_token": "A34EE199-2B53-4893-A207-88C2802CEFED",
+  "event_seq": 4,
+  "last_event_id": "event-000004",
+  "fork_count": 0,
+  "orchestration": {
+    "max_state_retries": 3,
+    "retry_backoff_seconds": 10
+  },
+  "cwd": "/Users/fukutomi/Library/CloudStorage/OneDrive-NITech/obsidian/lab/labmemo",
+  "project_name": "labmemo",
+  "prompt_seq": 1,
+  "git": {
+    "branch": "main",
+    "uncommitted_changes": 3,
+    "last_commit": "56e9254"
+  },
+  "plans": {
+    "exists": false,
+    "last_modified": 0,
+    "wip_tasks": 0,
+    "todo_tasks": 0,
+    "pending_tasks": 0,
+    "completed_tasks": 0
+  },
+  "changes_this_session": [
+    {
+      "file": "研究方針.md",
+      "action": "Write",
+      "timestamp": "2026-01-17T20:57:05Z",
+      "important": false
+    }
+  ],
+  "resumed_at": "2026-01-17T20:45:40Z",
+  "intent": "literal",
+  "ended_at": "2026-01-17T20:57:10Z",
+  "duration_minutes": 551,
+  "memory_logged": true
+}
