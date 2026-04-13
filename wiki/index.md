@@ -1,7 +1,7 @@
 # Wiki Index
 
 > このファイルはLLMによって自動メンテナンスされます。手動編集は最小限に。
-> Last updated: 2026-04-10
+> Last updated: 2026-04-11
 
 ## 研究テーマ
 [[研究方針]] — LLMを用いた議論支援システムの研究
@@ -45,6 +45,14 @@
 | [[papers/2501.08977]] | Moen et al., 2025 | 臨床文書要約の9属性品質評価器具PDSQI-9（医療ドメイン） | #medical-summarization #evaluation |
 | [[papers/2502.08224]] | Pei et al., WWW 2025 | SOPフロー駆動の5エージェントITインフラ根本原因分析システム | #multi-agent #sop #it-operations |
 | [[papers/2509.06602]] | Blondeel et al., 2025 | 腫瘍委員会向けLLMマルチエージェントHAOとTBFact評価（医療ドメイン） | #multi-agent #medical #summarization |
+| [[papers/2301.09911]] | Alshomary et al., 2023 | マルチタスクBARTとスタンスランキングで反論のContrastiveness最大化 | #counter-argument #argument-mining #llm |
+| [[papers/2503.05328]] | 2025 | Web検索RAGで動的知識統合し事実根拠付き反論を生成、LLM審判ρ=0.82 | #counter-argument #argument-mining #rag |
+| [[papers/2402.08498]] | ICWSM 2025 | 3修辞スタイルの反論比較でスタイル-証拠トレードオフを実証（38,000ペア） | #counter-argument #persuasion #llm |
+| [[papers/2404.10570]] | Heidelberg+Bielefeld, 2024 | PAKT知識グラフで討論のフレーム・価値観・概念をNeo4jで可視化 | #argumentation-framework #knowledge-grounded #debate |
+| [[papers/2410.23724]] | Imperial+Ericsson+Liverpool, 2024 | Argumentation×MLの交差点を3タイプ・2目的で体系化したサーベイ | #survey #argument-mining #argumentation-framework |
+| [[papers/2010.03538]] | Cornell, 2020 | 議論構造特徴量＋BiLSTM+BERTでDDO討論勝者予測精度77.28% | #argument-mining #persuasion #debate #dataset |
+| [[papers/2011.01589]] | Grammarly+Mannheim, 2020 | GAQCorpus: 3ドメイン5,285件を4軸（論理性・効果性・合理性）で品質評価 | #argument-quality #argument-mining #dataset |
+| [[papers/2103.07769]] | Qatar+FullFact+Bologna, 2021 | 自動ファクトチェック4段階パイプラインの包括サーベイ | #survey #factuality #claim-verification |
 
 ---
 
@@ -82,3 +90,10 @@
 - `#medical-summarization` — 医療文書要約（参考）
 - `#sop` — 標準作業手順書活用
 - `#it-operations` — ITオペレーション（参考）
+- `#counter-argument` — 反論生成・反論支援
+- `#argument-quality` — 議論品質評価（Cogency/Effectiveness/Reasonableness）
+- `#persuasion` — 説得・議論の効果
+- `#debate` — 討論・ディベート
+- `#factuality` — 事実性・ファクトチェック
+- `#claim-verification` — クレーム検証・事実検証
+- `#knowledge-grounded` — 知識グラウンド型生成
