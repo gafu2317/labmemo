@@ -1,10 +1,11 @@
 # Wiki Index
 
 > このファイルはLLMによって自動メンテナンスされます。手動編集は最小限に。
-> Last updated: 2026-04-11
+> Last updated: 2026-05-08
 
 ## 研究テーマ
 [[研究方針]] — LLMを用いた議論支援システムの研究
+[[研究方針]] — 不動産賃借希望者ペルソナAIエージェント（記事ベースのキャラクター模倣）
 
 ---
 
@@ -50,6 +51,17 @@
 | [[papers/2402.08498]] | ICWSM 2025 | 3修辞スタイルの反論比較でスタイル-証拠トレードオフを実証（38,000ペア） | #counter-argument #persuasion #llm |
 | [[papers/2404.10570]] | Heidelberg+Bielefeld, 2024 | PAKT知識グラフで討論のフレーム・価値観・概念をNeo4jで可視化 | #argumentation-framework #knowledge-grounded #debate |
 | [[papers/2410.23724]] | Imperial+Ericsson+Liverpool, 2024 | Argumentation×MLの交差点を3タイプ・2目的で体系化したサーベイ | #survey #argument-mining #argumentation-framework |
+| [[papers/2310.10158]] | Shao et al., EMNLP 2023 | キャラクタープロファイル学習でLLMを特定人物として振る舞わせる | #persona #role-playing #fine-tuning |
+| [[papers/2301.02401]] | Lim et al., EMNLP 2022 | 外部知識とペルソナを同時グラウンディングする対話エージェント | #persona #knowledge-grounding #RAG |
+| [[papers/2408.11779]] | Zhu et al., ICLR 2025 | Big Five等の性格特性でLLMを効率的にアライメント（PAPI） | #persona #personality #alignment |
+| [[papers/2010.03205]] | Majumder et al., EMNLP 2020 | Commonsense拡張でペルソナから暗黙の好みを推論して対話 | #persona #commonsense #variational |
+| [[papers/2109.07713]] | Wu et al., EMNLP 2021 | 最小編集でペルソナ一貫性を保ちながら新ドメインへ転移 | #persona #consistency #minimal-edit |
+| [[papers/2305.17388]] | Ahn et al., ACL 2023 | テキスト＋画像のマルチモーダルペルソナに基づく対話 | #persona #multimodal #dataset |
+| [[papers/2503.17662]] | Ji et al., ACL 2025 | アノテーション不要の対照学習でロールプレイ一貫性を向上（PCL） | #persona #consistency #contrastive-learning |
+| [[papers/2302.06674]] | Oh et al., EMNLP 2023 | ペルソナ＋知識を同時検索するRAGフレームワーク（PK-ICR） | #persona #RAG #retrieval |
+| [[papers/2407.03974]] | Tamoyan et al., 2024 | ペルソナLLMで人間-チャットボット対話を44%識別不能率でシミュレート | #persona #user-simulation #evaluation |
+| [[papers/2401.12474]] | Lu et al., ACL 2024 | 自己アライメントで4000キャラクターのロールプレイデータを自動生成（Ditto） | #role-playing #self-alignment #dataset |
+| [[papers/2502.09082]] | Wang et al., ICML 2025 | 17,966キャラクター＋GCA評価でペルソナシミュレーションのSOTA（CoSER） | #persona #role-playing #evaluation #dataset |
 | [[papers/2010.03538]] | Cornell, 2020 | 議論構造特徴量＋BiLSTM+BERTでDDO討論勝者予測精度77.28% | #argument-mining #persuasion #debate #dataset |
 | [[papers/2011.01589]] | Grammarly+Mannheim, 2020 | GAQCorpus: 3ドメイン5,285件を4軸（論理性・効果性・合理性）で品質評価 | #argument-quality #argument-mining #dataset |
 | [[papers/2103.07769]] | Qatar+FullFact+Bologna, 2021 | 自動ファクトチェック4段階パイプラインの包括サーベイ | #survey #factuality #claim-verification |
@@ -97,3 +109,12 @@
 - `#factuality` — 事実性・ファクトチェック
 - `#claim-verification` — クレーム検証・事実検証
 - `#knowledge-grounded` — 知識グラウンド型生成
+- `#persona` — ペルソナ・キャラクター模倣
+- `#role-playing` — ロールプレイ・キャラクターエージェント
+- `#character-alignment` — キャラクターアライメント
+- `#user-simulation` — ユーザーシミュレーション
+- `#consistency` — ペルソナ一貫性
+- `#personality` — 性格特性（Big Fiveなど）
+- `#self-alignment` — 自己アライメント（アノテーション不要）
+- `#contrastive-learning` — 対照学習
+- `#commonsense` — 常識推論
