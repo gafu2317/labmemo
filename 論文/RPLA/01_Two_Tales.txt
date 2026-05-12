@@ -1,0 +1,1311 @@
+                                                                            Two Tales of Persona in LLMs:
+                                                                      A Survey of Role-Playing and Personalization
+                                                    Yu-Min Tseng*†‡ Yu-Chao Huang*† Teng-Yun Hsiao*† Wei-Lin Chen*†⋆
+                                                               Chao-Wei Huang† Yu Meng⋆ Yun-Nung Chen†
+                                                         †
+                                                             National Taiwan University ‡ Academia Sinica ⋆ University of Virginia
+                                                                              ymtseng@nlg.csie.ntu.edu.tw
+                                                                        yumeng5@virginia.edu y.v.chen@ieee.org
+                                                                      § https://github.com/MiuLab/PersonaLLM-Survey
+
+                                                                      Abstract                                 Role-Playing
+                                                                                                         - Adapt to Environment -                           You are an engineer. Precision and
+                                                                                                                                                            attention to detail define your work,
+                                                The concept of persona, originally adopted in                                                               ensuring that ......
+
+
+                                                dialogue literature, has re-surged as a promis-            You are a judge who
+                                                                                                           embodies fairness
+                                                                                                                                                                             You are a painter. 
+
+
+
+
+
+arXiv:2406.01171v3 [cs.CL] 5 Oct 2024
+                                                ing framework for tailoring large language                 and impartiality,
+                                                                                                           ensuring ......
+                                                                                                                                                                             You find beauty in
+                                                                                                                                                                             everyday scenes, ......
+                                                models (LLMs) to specific context (e.g., per-
+                                                sonalized search, LLM-as-a-judge). However,                You are a nurse. Your                                       You are a benevolent King
+
+                                                the growing research on leveraging persona in              extensive medical
+                                                                                                           knowledge and technical
+                                                                                                                                                                       who rules with
+                                                                                                                                                                       compassion and wisdom.
+
+                                                LLMs is relatively disorganized and lacks a sys-           skills allow you ......                                     You lead the ......
+
+
+                                                tematic taxonomy. To close the gap, we present
+                                                a comprehensive survey to categorize the cur-              Personalization
+                                                rent state of the field. We identify two lines of           - Adapt to User -                 LLM
+                                                                                                                                                                          Please take {user info.} into
+                                                                                                                                                                          consideration and respond
+                                                research, namely (1) LLM Role-Playing, where                                                                              to the question: {Q.}
+
+
+                                                personas are assigned to LLMs, and (2) LLM
+                                                                                                             “Brian Balmages”
+        “I will always love you”
+            “We will rock you”
+
+                                                Personalization, where LLMs take care of user                 --- Beathoven           --- Whitney Houston                   --- Queen
+
+
+                                                personas. Additionally, we introduce existing
+                                                methods for LLM personality evaluation. To
+                                                                                                                                46Y                         18Y                              25Y
+                                                the best of our knowledge, we present the first
+                                                survey for role-playing and personalization in
+                                                                                                                 Q: Please recommend a song that matches my current mood.
+                                                LLMs under the unified view of persona. We
+                                                continuously maintain a paper collection to fos-
+                                                ter future endeavors.                               Figure 1: In Role-Playing, LLMs act according to as-
+                                                                                                    signed personas (i.e., roles) under a defined environment.
+                                                                                                    For example, given role names with descriptions, LLMs
+                                        1       Introduction                                        role-play in a social simulation game. For Personaliza-
+                                                                                                    tion, LLMs consider user personas to generate tailored
+                                        The striking capabilities of large language mod-            responses to the same question. Dashed rectangles are
+                                        els (LLMs), exemplified by ChatGPT (OpenAI,                 prompts and solid rectangles are LLMs’ responses.
+                                        2022), have significantly advanced the field of nat-
+                                        ural language processing (NLP; Wei et al., 2023;
+                                                                                                       In this paper, we aim to close the gap by offering
+                                        Madaan et al., 2024; Shinn et al., 2024). Recently,
+                                                                                                    a comprehensive survey and a systematic catego-
+                                        in addition to using LLMs as NLP task solvers or
+                                                                                                    rization of existing studies. Specifically, we divide
+                                        general-purpose chatbots, the question of how to
+                                                                                                    current research into two main streams, namely
+                                        adapt LLMs for specific context has received great
+                                                                                                    LLM Role-Playing and LLM Personalization, as
+                                        attention. To this end, leveraging personas has
+                                                                                                    illustrated in Figure 1. The primary distinction
+                                        resurfaced as an ideal lens for adapting LLMs in
+                                                                                                    is that in role-playing, the persona belongs to the
+                                        target scenarios (Chen et al., 2023a, 2024). By in-
+                                                                                                    LLM, while in personalization, the persona belongs
+                                        corporating personas, LLMs can generate more
+                                                                                                    to the user. Further, the literature on role-playing
+                                        contextually appropriate responses, maximizing
+                                                                                                    mainly focuses on the tasks (i.e., how LLMs with
+                                        their utility and effectiveness for specific applica-
+                                                                                                    role-playing can achieve better performance). In
+                                        tions. However, the growing literature on persona
+                                                                                                    contrast, the literature of personalization primarily
+                                        in the LLM era is relatively disorganized, lacking
+                                                                                                    focuses on the users (i.e., how to satisfy users’ ex-
+                                        a unifying overview.
+                                                                                                    pectations and meet their needs). It is noteworthy
+                                            *
+                                                Equal contribution.                                 that both of role-playing and personalization can
+                                                                                                                       Dong et al. (2023);
+                                                                                                                       ChatDev (Qian et al., 2023);
+                                                                                                                       MetaGPT (Hong et al., 2023a)
+                                                                           Software Development (§2.1.1)               – Dataset –
+                                                                                                                       SoftwareDev (Hong et al., 2023a);
+                                                                                                                       SRDD (Qian et al., 2023)
+
+                                                                                                                       Generative Agents (Park et al., 2023);
+                                                                                                                       Humanoid Agent (Wang et al., 2023d);
+                                                                                     Game (§2.1.2)
+                                                 Environments (§2.1)                                                   Fu et al. (2023);
+                                                                                                                       Voyager (Wang et al., 2023a)
+
+                                                                                                                       Wu et al. (2023a);
+                                                                            Medical Application (§2.1.3)               MedAgents (Tang et al., 2023a)
+
+                                                                                                                       DRPE (Wu et al., 2023b);
+                                                                             LLM-as-Evaluator (§2.1.4)                 ChatEval (Chan et al., 2023)
+
+                                                                                                                       Voyager (Wang et al., 2023a);
+                LLM Role-Playing (§2)                                                 Single-Agent                     MindAct (Deng et al., 2024)
+                                              Role-Playing Schema (§2.2)
+                                                                                                                       ChatDev (Qian et al., 2023);
+                                                                                      Multi-Agent                      MedAgents (Tang et al., 2023a)
+
+                                                                                                                       AgentVerse (Chen et al., 2023c);
+                                                                                  Voluntary Behavior                   MetaGPT (Hong et al., 2023a)
+
+                                                                                                                       MedAgents (Tang et al., 2023a);
+                                              Emergent Behaviors (§2.3)          Conformity Behavior                   Fu et al. (2023)
+
+                                                                                                                       CAMEL (Li et al., 2024a);
+                                                                                 Destructive Behavior                  Deshpande et al. (2023);
+                                                                                                                       Gupta et al. (2023)
+
+                                                                           PALR (Yang et al., 2023b); Dai et al. (2023); ONCE (Liu et al., 2023b)
+                                                                           Christakopoulou et al. (2023); BookGPT (Zhiyuli et al., 2023);
+                                               Recommendation (§3.1)       – Dataset –
+                                                                           MovieLens (Harper and Konstan, 2015)
+
+                                                                           CoPS (Zhou et al., 2024); Spatharioti et al. (2023); Ziems et al. (2023);
+                                                    Search (§3.2)          Sharma et al. (2024); Baek et al. (2024)
+ Taxonomy
+                                                                           HumSum (Shehata et al., 2023); EduChat (Dan et al., 2023); Park et al. (2024);
+                                                   Education (§3.3)        Kasneci et al. (2023); Wang et al. (2024b)
+
+                                                                           openCHA (Abbasian et al., 2024a); CHA (Abbasian et al., 2024c);
+               LLM Personalization (§3)                                    MaLP (Zhang et al., 2024a); HealthLLM (Jin et al., 2024b)
+                                                  Healthcare (§3.4)        – Dataset –
+                                                                           MedDialog (Zeng et al., 2020); IMCS-21 (Chen et al., 2022b); iCliniq (Li et al., 2023d)
+
+                                                                                                                       RefGPT (Yang et al., 2023a);
+                                                                                                                       ProToD (Hu et al., 2023);
+                                                                                                                       DSP (Li et al., 2024c)
+                                                                                     ToD Modeling                      – Dataset –
+                                                                                                                       MutiWoz (Budzianowski et al., 2018);
+                                                                                                                       SGD (Rastogi et al., 2020)
+                                                   Dialogue (§3.5)
+                                                                                                                       P 2 (Liu et al., 2020); Kim et al. (2024b);
+                                                                                                                       CLV (Tang et al., 2023b)
+                                                                               User Persona Modeling                   – Dataset –
+                                                                                                                       PersonaChat (Zhang et al., 2018a);
+                                                                                                                       ConvAI2 PersonaChat (Dinan et al., 2019)
+
+                                                                           Jiang et al. (2023); Sorokovikova et al. (2024);
+            LLM Personality Evaluation (§4)      Big Five; MBTI; etc       Pan and Zeng (2023); Song et al. (2024); PsychoBench (Huang et al., 2023)
+
+
+  Figure 2: The taxonomy of LLM role-playing and LLM personalization (representative works shown only).
+
+
+be goals in the same scenario, but serve different                     We aim for this work to serve as both a valuable
+purposes and are driven by different aspects. The                      introduction for newcomers and a comprehensive
+definitions are detailed below.                                        resource for current researchers in the field.
+   • LLM Role-Playing: LLMs are tasked to play                            Our taxonomy is illustrated in Figure 2. We
+     the assigned personas (i.e., roles) and act                       first introduce LLM role-playing (§2), followed
+     based on environmental feedback, adapting                         by LLM personalization (§3). Next, we provide
+     to the environment.                                               an overview of evaluation methods (§4) assessing
+                                                                       whether the personality of LLMs (e.g., personality
+   • LLM Personalization: LLMs are tasked to                           traits or psychological behaviors) accurately aligns
+     take care of user personas (e.g., background                      with expected personas after the adaptation (i.e., for
+     information or historical behaviors) to meet in-                  role-playing LLMs that act according to assigned
+     dividualized needs, adapting to distinct users.                   personas and personalized LLMs that fit user per-
+   To the best of our knowledge, we present the                        sonas). Lastly, we highlight current challenges and
+first survey for LLM role-playing and LLM per-                         future directions (§5). We hope that this taxonomy
+sonalization under the unified view of persona. To                     could serve as a useful guideline for researchers
+foster future endeavors, we actively maintain a pa-                    to easily target the tasks/scenarios of interests, and
+per collection available to the research community.                    swiftly pinpoint their current position in the field.
+    Make an accurate diagnosis.         Create a snake game.                                               Choose a better response.       Explore the Minecraft world.
+
+
+                                                                                LLM
+
+                                  Coder                    CTO        {Persona/Role}                              General Public
+                                                                 {Given Task}           {Defined Env.}
+
+    Doctor              Patient                                                                                                            Assistant
+                                   PM                      CEO                                           Critic             Psychologist
+                                                                         Role-Playing
+      Medical Application          Software Development            - Adapt to Environment -                   LLM as Evaluators                        Game
+
+
+Figure 3: An illustration of four LLM role-playing environments: Software Development (§2.1.1), Game (§2.1.2),
+Medical Application (§2.1.3), and LLM as Evaluators (§2.1.4). For each environment, we provide a simple scenario
+with a task description (red-bordered) and relevant personas (i.e., roles; blue-bordered). The dashed rectangle
+represents an example LLM role-playing prompt template. In addition to the above environments, past research also
+proposes general frameworks applicable to different environments (§5.1).
+
+
+2      LLM Role-Playing                                                                plexity of these tasks, often too intricate to be
+                                                                                       completed correctly on the first attempt, existing
+LLM-based language agents have demonstrated im-
+                                                                                       research leverages approaches like the Waterfall
+pressive abilities, such as planning, reflection, and
+                                                                                       model (Petersen et al., 2009; Bassil, 2012) or Stan-
+tool-use recently (Yao et al., 2022b; Shinn et al.,
+                                                                                       dardized Operating Procedures (SOPs) (Belbin and
+2024; Yao et al., 2024). The predominant approach
+                                                                                       Brown, 2022; DeMarco and Lister, 2013) to break
+of LLM role-playing is by coupling personas with
+                                                                                       down the tasks into manageable sub-tasks.
+language agents, specifically, by incorporating per-
+                                                                                          Similar to real-world settings, LLMs role-play
+sonas directly inside the prompt of language agents.
+                                                                                       to operate as a company in a collaborative, multi-
+Such a training-free paradigm is particularly desir-
+                                                                                       agent software development environment (Qian
+able due to its simplicity and effectiveness.
+                                                                                       et al., 2023; Hong et al., 2023a; Dong et al., 2023).
+   Language agents with role-playing elicit the cor-
+                                                                                       Different roles include Chief Technology Officer
+responding parametric knowledge in LLMs to gen-
+                                                                                       (CTO), Chief Product Officer (CPO), Chief Execu-
+erate responses aligned with assigned personas (i.e.,
+                                                                                       tive Officer (CEO), Product Managers, Engineers,
+role), enabling them to adapt to various interac-
+                                                                                       Reviewers, and Testers. By assigning specific roles,
+tive environments. LLM role-playing also extends
+                                                                                       LLMs are capable of carrying out tasks in a step-
+to multi-agent settings, where multiple language
+                                                                                       by-step and accurate manner.
+agents are equipped with diverse personas, cooper-
+                                                                                          Recent work (Dong et al., 2023) proposed one of
+ating and communicating with each other to solve
+                                                                                       the first self-collaboration frameworks that encom-
+complex tasks (Guo et al., 2024). For instance, in
+                                                                                       passes division of labor and collaboration among
+one of the first works of role-played LLMs, Park
+                                                                                       multiple LLM agents, each acting as a special-
+et al. (2023) propose generative agents, which en-
+                                                                                       ized “experts” to address complex code genera-
+gage in a social simulation environment by mim-
+                                                                                       tion tasks. Following the Waterfall model, Chat-
+icking human behaviors according to names, ages,
+                                                                                       Dev (Qian et al., 2023) divides the development
+and personality traits specified in the prompts.
+                                                                                       process into a four-phase pipeline: designing, cod-
+   Following we introduce different environments
+                                                                                       ing, testing, and documenting and proposes Chat
+and associated roles in which LLMs adapt to (§2.1),
+                                                                                       Chain to decompose each phase into a sequence of
+interactions between LLMs within the environ-
+                                                                                       atomic sub-tasks. Differing from the above work,
+ment (§2.2), and emergent behaviors stemming
+                                                                                       MetaGPT (Hong et al., 2023a) require LLM agents
+from their interactions (§2.3). Figure 3 provides an
+                                                                                       to generate structured outputs instead of free-text,
+illustrative overview.
+                                                                                       demonstrating a significant increase in the success
+2.1      Environments                                                                  rate of target code generation.
+
+2.1.1        Software Development                                                      2.1.2        Game
+For software development, the goal typically in-                                       LLMs have been an effective backbone for agents
+volves designing programs or coding projects. For                                      in a variety of game environments, including
+instance, “Create a snake game.” or “Create a                                          Minecraft (Wang et al., 2023a), social simula-
+Python program to develop an interactive weather                                       tion (Park et al., 2023; Wang et al., 2023d), and
+dashboard.” (Hong et al., 2023a). Due to the com-                                      bargaining game (Fu et al., 2023). In these environ-
+ments, LLMs are tasked to role-play as a general        as helpfulness, relevance, accuracy, depth, and cre-
+assistant (Wang et al., 2023a), or characters related   ativity. Wu et al. (2023b) propose DRPE to assess
+to the environment, such as buyers and sellers (Fu      the quality of summarization by assigning LLMs
+et al., 2023). Gaming environments usually contain      statically objective roles and dynamically subjec-
+a wide range of information, including settings, uti-   tive roles based on task settings. Another work,
+lizable tools, and nearby situations, which presents    ChatEval (Chan et al., 2023), further adds discus-
+challenges for LLMs to memorize and respond.            sion rounds within roles to improve the evaluation
+Thus, retrieval-based memory stream approaches          process, simulating a judge group in reality.
+are a crucial component for the effectiveness of
+language agents role-playing in the game environ-       2.2   Role-Playing Schema
+ments (Park et al., 2023; Wang et al., 2023a).          We categorize two schemas in LLM role-playing
+2.1.3   Medical Application                             environments: single-agent and multi-agent.
+
+In medical domain environments, Wu et al. (2023a)       Single-Agent We define the single-agent schema
+propose DR-CoT prompting, the first approach to         as: One agent is able to achieve its goal indepen-
+leverage LLM role-playing for diagnostic reason-        dently without assistance from others, though mul-
+ing. By mimicking doctors underlying thought            tiple agents may coexist in the same environment.
+processes, DR-CoT exhibits a striking improve-             Single-agent schema is most common in game
+ment from standard prompting. Then, Kwon et al.         environments, where LLMs attend more to envi-
+(2024) extend such success to image-based diag-         ronmental information and feedback rather than
+nosis via knowledge distillation, addressing the        collaboration. For example, Voyager (Wang et al.,
+application in real-world clinical settings. Another    2023a) agents, playing general assistant roles, are
+work, MedAgent (Tang et al., 2023a), introduces a       tasked to continuously explore the defined envi-
+multi-agent collaboration framework into medical        ronment, acquire diverse skills, and make novel
+reasoning through five processes: expert gathering,     discoveries in Minecraft. Despite the presence of
+analysis proposition, report summarization, col-        multiple Voyager agents in Minecraft, each agent is
+laborative consultation, and decision making, to        capable of exploring the gaming world on its own.
+mimic actual medical scenarios.
+   These studies assign medically relevant personas     Multi-Agent We define the multi-agent schema
+to LLMs, ranging from general roles like doctor         as: Supports (e.g., collaborate and communicate)
+and patient to specific ones such as neurology          from other agents are necessary for one agent to
+and psychiatry experts. Their research demon-           achieve its goal.
+strates LLMs inherently possess medical knowl-             Software development and medical applica-
+edge (Liévin et al., 2024), enabling performance        tions are the primary environments for multi-agent
+enhancement via LLM role-playing successfully.          schema. Similar to real world, interaction within
+                                                        environments is crucial. Representative works like
+2.1.4   LLM-as-Evaluator                                AgentVerse (Chen et al., 2023c) and ChatDev (Qian
+The concept of adopting strong LLMs as evalua-          et al., 2023) both propose multi-agent frameworks
+tors has become a de facto framework for evalu-         that exchange information and cooperate to accom-
+ating LM alignment. It is shown that LLMs are           plish their tasks efficiently. Further, we identify
+capable of assessing human-like values in model         two collaboration paradigms in the multi-agent
+responses, and judgments made by LLMs could re-         schema (Xi et al., 2023; Guo et al., 2024): Cooper-
+flect a higher correlation with human ground-truth      ative and Adversarial. The cooperative paradigm
+than traditional metrics (Chiang and Lee, 2023;         facilitates information sharing among agents, for
+Wang et al., 2023b; Lin and Chen, 2023).                example, several works use message pools to store
+   Aiming for a greater similarity with human eval-     each agent’s current state and ongoing tasks (Hong
+uation, roles in LLM-as-evaluator environments          et al., 2023a; Tang et al., 2023a; Chen et al., 2023c).
+span a broad spectrum, representing various per-        For the adversarial paradigm, including debate,
+spectives of human beings in society, such as the       competition, and criticism, enhances the decision-
+general public, the critic, and the news author. In     making process and seeks more advantages by
+LLM-as-a-judge (Zheng et al., 2023), LLMs role-         adopting opposing perspectives (Chan et al., 2023;
+play an impartial judge and consider factors such       Fu et al., 2023).
+                                   Your BMI is 29.3, putting                                  Book a flight from Taipei to New York.
+                                   you at risk of overweight...
+                                                                                      When would you like to travel?
+                                           Healthcare
+                                                                                                                   May 28 to June 10.
+                                                                                      Sure. How many people?
+                                     AllRecipes: ... [Link                                                                            Dialogue
+                                     Food Network: ... [Link]           LLM
+
+                                             Search               Personalization             Teach me the concept of black hole.
+                                                                  - Adapt to User -   What do you know about black holes?
+                                   1. La La Land
+                                               They are regions in space where ...
+                                   2. Groundhog Day ...
+                                                                                      Correct. Additionally, ...
+                                      Recommendation                                                                                  Education
+
+
+Figure 4: An illustration of five types of personalized LLMs: Recommendation (§3.1), Search (§3.2), Educa-
+tion (§3.3), Healthcare (§3.4), and Dialogue (§3.5). On the left side, dashed rectangles are prompts, and solid
+rectangles are the responses of LLMs. On the right side, we depict multi-turn interactions between LLMs and users.
+
+
+2.3   Emergent Behaviors in Role-Playing                            3         LLM Personalization
+Under the multi-agent schema, different behaviors                   Prominent approaches for aligning LLMs to user
+reflecting phenomena in human society (e.g., con-                   intents typically leverage reinforcement learning
+formity and consensus reaching) emerge through                      from human feedback (RLHF), a process that in-
+LLM collaboration. We introduce three collabora-                    fuses collective consciousness and biases into the
+tive behaviors following Chen et al. (2023c).                       model. To enhance individual experience and pref-
+                                                                    erence, personalized LLMs consider user personas
+                                                                    (e.g., individual information, historical behaviors)
+Voluntary Behavior Voluntary behaviors usually
+                                                                    and cater to customized needs (Chen et al., 2023e;
+occur in the cooperative collaboration paradigm,
+                                                                    Deshpande et al., 2024). Following we introduce
+where agents proactively assist their peers or in-
+                                                                    various personalized tasks with associated methods
+quire if there is anything they can help with to
+                                                                    for achieving personalization. Figure 4 presents an
+accomplish team goals. In addition, they may con-
+                                                                    illustrative overview of personalization tasks.
+tribute resources to others, such as unallocated time
+and possessed materials. Through voluntary behav-                   3.1        Personalized Recommendation
+iors, LLMs enhance team efficiency and demon-
+                                                                    Recommendation systems aim to recommend items
+strate cohesion and commitment within defined en-
+                                                                    (e.g., books or movies) to users that match their
+vironments (Chen et al., 2023c; Hong et al., 2023a).
+                                                                    preferences. We compare existing research in Ta-
+                                                                    ble 2 and compile relevant datasets in Table 3.
+Conformity Behavior Conformity behaviors oc-                           Existing studies explore various prompting meth-
+cur in situations where an agent deviates from the                  ods for using LLMs in recommendation systems.
+team goal. After receiving criticism and sugges-                    Li et al. (2023a) develop a method for efficient in-
+tions from others, the deviating agent then refines                 corporation of users’ personal information. Li et al.
+and adjusts its behavior or decisions to better co-                 (2023b) combine aspect extraction with aspect-
+operate with the team. Through conformity behav-                    based recommendations via LLMs prompt tuning.
+iors, LLMs align with the mutual goal and pursue                    Chen et al. (2022a) generate personalized chit-
+improved accuracy and completeness (Tang et al.,                    chat to enhance recommendation. Focusing on
+2023a; Fu et al., 2023).                                            the framework design, Yang et al. (2023b) present
+                                                                    a novel LLM fine-tuning recommendation system.
+Destructive Behavior Occasionally, LLMs un-                         Chu et al. (2023) merge different recommendation
+dertake various actions that lead to undesired and                  systems to effectively integrating the commonsense
+detrimental outcomes. For instance, it may exhibit                  and reasoning abilities of LLMs. Hu et al. (2024)
+a Bad Mind that seeks to control the world (Li                      propose a sequential recommendation framework
+et al., 2024a). Additionally, LLMs might display                    to preserve fine-grained item textual information.
+toxicity or reveal deep-seated stereotypical biases                    A lot of works have focused on the zero-shot
+when equipping personas (Deshpande et al., 2023;                    setting, leveraging the powerful out-of-the-box ca-
+Gupta et al., 2023). Such destructive behaviors                     pabilities of LLMs. Wang and Lim (2023) adopt
+raise safety and bias concerns of role-playing.                     a three-step prompting pipeline to achieve bet-
+ter zero-shot next-item recommendation. Hou                Personalized LLMs have the potential to create
+et al. (2024) propose a zero-shot sequential recom-     a more inclusive and equitable educational ecosys-
+mendation system via in-context learning. Zhang         tem, obviating the need for individuals to pay dis-
+et al. (2023) enhance user-friendliness by allowing     proportionate fees. Recent works have illustrated
+users to freely interact with the system and receive    various opportunities and visions for integrating
+more precise recommendations through natural lan-       LLMs into educational environments. These ap-
+guage instructions. For generalizability, Wang et al.   plications range from personalized learning and
+(2024d) highlight that current recommendation sys-      teaching assistance to homework assessment and
+tems mostly focus on specific tasks and lack the        feedback (Kasneci et al., 2023; Wang et al., 2024b;
+ability to generalize to new tasks. They propose        Jeon and Lee, 2023; Huber et al., 2024).
+an LLM-powered agent for general recommenda-               For example, E DU C HAT (Dan et al., 2023) pre-
+tion purposes. Although LLM-based personalized          trained models on an educational corpus to es-
+search systems present a more convenient and sim-       tablish a foundational knowledge base, and sub-
+ple solution for information search, ensuring the       sequently fine-tune models on personalized tasks
+accountability and trustworthiness of the synthe-       such as essay assessment, Socratic teaching, or
+sized results still requires further development (Li    emotional support. H UM S UM (Shehata et al., 2023)
+et al., 2024b).                                         summarize personalized lecture transcripts from di-
+                                                        verse scenarios, considering factors such as length,
+3.2   Personalized Search
+                                                        depth, tone, and complexity. This is followed by
+Compared to traditional search systems that pro-        prompt tuning to modify the summary based on the
+vide a list of hard-to-organize relevant results and    personalization options given by users. Park et al.
+are limited to simple queries, personalized search      (2024) incorporate the student’s affective state, cog-
+systems enable understanding of complex queries         nitive state, and learning style into the prompt to
+and past interactions to infer user preferences, syn-   create a personalized conversation-based tutoring
+thesizing information from multiple sources and         system.
+presenting it in a cohesive, natural language form.
+   Spatharioti et al. (2023) demonstrate that LLM-      3.4   Personalized Healthcare
+based search systems improve users’ performance
+in certain situations. Ziems et al. (2023) suggest      LLMs have exhibited expert-level capabilities in a
+that LLMs act as built-in search engines given few-     range of general biomedical tasks, with the poten-
+shot demonstrations. Specifically, LLMs can gen-        tial to integrate into people’s everyday lives (Cohan
+erate correct web URLs for corresponding docu-          et al., 2020; Milne-Ives et al., 2020; Singhal et al.,
+ments. Building upon Zhou et al. (2021), Zhou           2023; Saab et al., 2024; Abbasian et al., 2024b).
+et al. (2024) present a strategy to combine the cog-       Towards personalized healthcare assistant, Ab-
+nitive memory mechanism with LLMs for person-           basian et al. (2024a) propose OPEN CHA, an LLM
+alized search, enabling LLMs to efficiently retrieve    agentic framework that integrates external data
+memory. Some works also leverage search en-             and personalized health data to address person-
+gine results to enhance LLM personalization (Baek       alized medical problems. Following OPEN CHA,
+et al., 2024; Salemi and Zamani, 2024). Empir-          Abbasian et al. (2024c) infuse domain-specific
+ically, Sharma et al. (2024) conduct experiments        knowledge to effectively utilize health data, knowl-
+to investigate how LLM-powered search systems           edge bases, and analytical tools for diabetes-related
+could lead to opinion polarization.                     questions. M A LP (Zhang et al., 2024a) combine
+                                                        parameter-efficient fine-tuning (PEFT) with a mem-
+3.3   Personalized Education                            ory retrieval module to generate personalized medi-
+The capability of LLMs can be utilized in a variety     cal responses. Other frameworks such as H EALTH -
+of ways to facilitate personalized education. For       LLM (Jin et al., 2024b) combine LlamaIndex (Liu,
+example, LLMs can provide detailed, step-by-step        2022) to make diagnosis predictions, and is ca-
+explanations in the Socratic teaching style (Hao        pable of generating personalized medical advice
+et al., 2024), answer questions on technical and        based on symptom descriptions provided by users.
+complicated subjects (Arefeen et al., 2023), and au-    Moreover, LLMs also show great potential for psy-
+tomatically summarize lectures to enhance learning      chotherapy (Stade et al., 2024; Chen et al., 2023b;
+experience (Gonzalez et al., 2023).                     Xu et al., 2024).
+3.5    Personalized Dialogue Generation                   alization. Equally important is the evaluation of
+Depending on the goals, dialogue generation tasks         whether the personality of LLMs accurately reflects
+can be categorized into: (1) Task-oriented dialogue       the intended persona after the adaptation (i.e., for
+modeling (ToD modeling) and (2) User persona              role-playing LLMs that act based on designated
+modeling. Following we discuss ToD modeling and           personas and personalized LLMs tailored to indi-
+User persona. We also organize various datasets           vidualized personas).
+for dialogue generation in Table 4.
+
+ToD Modeling ToD modeling guides users in                    A line of works has carried out the evaluation
+completing specific tasks, such as hotel bookings or      leveraging human personality assessments, includ-
+restaurant reservations, through multiple interactive     ing Big Five (Jiang et al., 2023; Sorokovikova et al.,
+steps. See an example in Table 5.                         2024) and MBTI (Pan and Zeng, 2023; Song et al.,
+   Hudeček and Dusek (2023) leverage instruction-        2024). For example, Sorokovikova et al. (2024);
+tuned LLMs and employ in-context learning for             Jiang et al. (2024) quantitatively evaluate LLM
+retrieval, and state tracking. Focusing on factuality,    personality based on the Big Five Personality In-
+R EF GPT (Yang et al., 2023a) generate truthful re-       ventory (BFI) test and story writing test. In the BFI
+sponses by augmenting the dialogue history with           evaluation, LLMs often can reflect their intended
+reliable sources and use prompts to guide LLM             persona accurately. Moreover, their personas often
+according to predefined dialogue settings. Li et al.      influence their linguistic style and personality con-
+(2024c); Hu et al. (2023) explore prompt augmen-          sistency (Frisch and Giulianelli, 2024; Jiang et al.,
+tations; on the other hand, DSP (Li et al., 2024c)        2023). While most works focus solely on either
+train a small policy model to generate hints and          semantic accuracy or personality consistency, Har-
+guide LLMs in completing tasks. A lot of works            rison et al. (2019) further explore controlling the
+used LLMs to generate multi-turn dialogue as train-       two aspects simultaneously.
+ing datasets (Yang et al., 2023a; Huryn et al., 2022;
+Xu et al., 2023). Further, personalized dialogues            Jiang et al. (2024) introduce Machine Personal-
+have been applied in procedural content genera-           ity Inventory (MPI) for evaluating LLMs’ person-
+tion for customized dialogue generation in video          ality traits. They use Big Five Personality Factors
+games (Ashby et al., 2023).                               to evaluate each personality trait consisting of a
+User Persona Modeling User persona modeling               series of descriptions and a set of options and sta-
+detects the user persona based on dialogue history        tistically measure each trait. By comparing with
+and generates customized responses tailored for           human evaluation, they find that the internal con-
+each user. See an example in Table 6.                     sistency correlates with model capabilities. On the
+   C O B ERT (Zhong et al., 2020) proposed persona-       other hand, Pan and Zeng (2023) evaluate LLMs
+based empathetic conversations using BERT with            with the MBTI test to assess whether LLMs pos-
+a two-hop co-attention mechanism (Lu et al., 2017)        sess human-like personalities, and conclude that
+to refine embeddings and identify the most relevant       different LLMs have different MBTI types, which
+response given the context and persona informa-           are often attributable to their training corpus. More-
+tion. Song et al. (2020) utilized natural language        over, they find that simply modifying the prompts
+inference (NLI) as an RL task with response per-          is unlikely to change the MBTI type of LLMs.
+sona as the reward to generate persona-consistent
+dialogue. Liu et al. (2020) proposed P 2 , a mutual
+                                                             Another work by Wang et al. (2024c) evaluate
+persona perception model, and employ supervised
+                                                          the personality fidelity of role-playing LLMs via
+training and self-play fine-tuning in the training pro-
+                                                          personality test interviewing, and ask LLM to rate
+cess. Tang et al. (2023b) combined sparse persona
+                                                          the score of each personality dimension according
+descriptions, dense persona descriptions, and dia-
+                                                          to the interview. Their results suggest that LLMs’
+logue history to generate personalized responses.
+                                                          demonstrated personalities align well with the as-
+                                                          signed character personas. However, whether the
+4     LLM Personality Evaluation
+                                                          aforementioned human psychometric tests are di-
+In the previous sections, we summarize the current        rectly transferable to be applied to LLMs remains
+progress in LLM role-playing and LLM person-              an open question (Dorner et al., 2023).
+5     Challenges and Future Directions                   of high-quality personal data for model develop-
+                                                         ment due to privacy concerns, hindering a thorough
+5.1    Towards a General Framework
+                                                         evaluation of personalization methods. In addition,
+Despite the effectiveness of various role-playing        existing benchmarks for both LLM role-playing
+frameworks, they are mostly task dependent and           and personalization are relatively limited, lacking
+heavily rely on human-crafted personas. Both re-         comprehensive evaluations across various dimen-
+quire prior knowledge and deep understanding of          sions (Chang et al., 2023; Samuel et al., 2024).
+the tasks (Chen et al., 2023c). Consequently, en-        Therefore, expanding datasets and benchmarks for
+hancing the generalizability of the framework and        specialized environments and personal information
+employing automatic prompt engineering is a fruit-       under privacy protection is an important next step.
+ful directions (Li et al., 2024a; Wang et al., 2023c).
+   To this end, Li et al. (2024a) propose a novel        5.4   Bias
+task-independent framework that allows agents to         While a large number of studies focus on enhanc-
+collaborate autonomously, but is limited to two          ing end-task performance, fewer works explore the
+roles and still requires human assigned personas.        biases induced by role-playing and personalization
+Subsequently, Wang et al. (2023c) introduce meth-        in LLMs. In this context, Gupta et al. (2023), as
+ods for LLMs to automatically identify personas          one of the first studies, highlight the deep-seated
+based on given problems. Another work by Chen            stereotypical biases found in LLMs assigned with
+et al. (2023c) also enable LLMs to dynamically           socio-demographic personas. Additionally, Zhao
+adjust the personas. However, they require prior         et al. (2024) find that applying role-play often in-
+knowledge of the intended tasks and pre-defined          creases the overall likelihood of generating stereo-
+configuration (e.g., the number of agents).              typical and harmful outputs. For personalized LLM
+                                                         recommendation systems, biases can be observed
+5.2    Long-Context Personas                             due to item popularity or item positions in the
+Richardson et al. (2023) note that incorporating         prompts (Hou et al., 2024). Empirically, Dorner
+user history data into the prompt for personalizing      et al. (2023) also reveal the presence of agree bias
+LLMs could lead to input exceeding context length        in LLMs – a tendency to agree with both true and
+as well as increased inference costs. Leveraging         false content, regardless of the actual facts. In sum,
+retrieval-based methods may have the problem of          there exists ample room for investigating and miti-
+potential information loss. Some works have pro-         gating different classes of biases in the context of
+posed to summarize user profiles, design long-term       LLM role-playing and personalization.
+memory mechanisms focusing on user portrait, pre-
+storing user information, or ways to efficiently rep-    5.5   Safety and Privacy
+resent for retrieval augmentation (Richardson et al.,    Past research has shown safety issues in LLM role-
+2023; Zhong et al., 2024; Zhang et al., 2024b;           playing and personalization. Jin et al. (2024a)
+Sun et al., 2024). However, retrieval augmenta-          and Shah et al. (2023) successfully manipulate
+tion might be underperforming due to unrelated or        LLMs to perform jailbreak collaboratively. Desh-
+noisy prompts (Tan et al., 2024). How to better          pande et al. (2023) also show that assigning per-
+store, encode, and integrate long-context personas       sonas to LLMs aid in jailbreaking. Negative behav-
+in LLMs requires further investigation.                  iors in LLM role-playing are also demonstrated by
+                                                         Chen et al. (2023c) and Li et al. (2024a). Further,
+5.3    Lack of Datasets and Benchmarks                   Deshpande et al. (2023) find that LLMs consis-
+For LLM role-playing, several tasks lack suitable        tently exhibit toxicity in a range of topics when
+datasets with specific formats (Ahn et al., 2024)        assigned personas, and Vijjini et al. (2024) show
+and environmental information (e.g., game envi-          that LLMs suffer from personalization bias when
+ronments require information about configurations        they are personalized for the user’s demographic.
+and tools). For personalized dialogue generation,        These works demonstrate the discovery of unsafe
+user persona modeling lacks contradictory per-           problems, indicating an urgent need and more ef-
+sona datasets and multimodal persona datasets that       forts to prevent potential exploits.
+would more accurately represent real human be-              Since LLM personalization heavily relies on user
+haviors (Kim et al., 2024b; Ahn et al., 2023). Fur-      personas, including personal information and his-
+thermore, LLM personalization faces a scarcity           torical behaviors, ensuring privacy is especially
+crucial. Recently, Wang et al. (2024a) discover          Limitations
+that using the membership inference attack can
+                                                         For the evaluation metric, as the literature, even
+leak personal information, raising concerns about
+                                                         within the same scope, addresses various sub-tasks
+encoding personal data into models. Although ex-
+                                                         and employs different corresponding evaluation
+isting research provides methods to address this
+                                                         metrics, or proposes their own ones (e.g., persona
+personal information leakage (Lukas et al., 2023;
+                                                         accuracy, task success rate, combined inform and
+Gambarelli et al., 2023; Huang et al., 2022; Chen
+                                                         success rate). This largely increase the difficulty
+et al., 2023d), the risks remain in need of more
+                                                         to establish a suitable/fair standard for comparison.
+effort and attention from the research community.
+                                                         Also, some scenarios may require multiple metrics
+6   Broader Implications                                 to determine overall performance (Samuel et al.,
+                                                         2024). For instance, we might need to assess the
+As LLM personalization continues to advance in           fluency, empathy, and safety of personalized LLMs.
+education domains, individuals could easily access       Consequently, we do not include a comprehensive
+personalized educational contents, lecture materi-       evaluation comparison in the paper. Instead, we
+als, and receive affordable tutoring, largely benefit-   provide the solid taxonomy, content, and future
+ing minority groups with limited resources. How-         directions that could serve as both a valuable in-
+ever, the concern of polarizing trends might arise,      troduction for newcomers and a comprehensive
+where the privileged group enjoys private tutors         resource for current researchers in the field.
+and underrepresented individuals only have access
+to LLM-powered supports (Li et al., 2023c). Also,        Acknowledgements
+personalized LLMs for healthcare could potentially       We thank Yu-Ching Hsu and Jia-Yin Foo from Na-
+be widely integrated into clinical scenarios, mental     tional Taiwan University for their assistance and
+health assessments, or prescribed therapeutic treat-     discussion. This work was financially supported
+ments in the near future, where critical questions       by the National Science and Technology Coun-
+such as legal considerations of the liability associ-    cil (NSTC) in Taiwan, under Grants 112-2223-
+ated with these personalized systems needs careful       E-002-012-MY5 and 111-2222-E-002-013-MY3,
+considerations (Swift and Allen, 2010).                  and from the Featured Area Research Center Pro-
+   As discussed in (§4), though methods for LLM          gram within the framework of the Higher Educa-
+personality evaluation have been proposed, there         tion Sprout Project by the Ministry of Education
+still lacks a unifying understanding of how to quan-     (113L900901/113L900902/113L900903).
+tify personality in LLMs (Fang et al., 2023). Song
+et al. (2024); Jiang et al. (2024) also show that
+LLMs sometimes do not hold consistent person-            References
+alities. It is crucial to continuously explore new       Mahyar Abbasian, Iman Azimi, Amir M. Rahmani, and
+measurements for reliable assessment of personal-          Ramesh Jain. 2024a. Conversational health agents:
+ity and psychological traits in LLMs, considering         A personalized llm-powered agent framework. 2, 6
+that in the future they might take on more advanced      Mahyar Abbasian, Elahe Khatibi, Iman Azimi, David
+roles and capabilities in society.                        Oniani, Zahra Shakeri Hossein Abad, Alexander
+                                                          Thieme, Ram Sriram, Zhongqi Yang, Yanshan Wang,
+7   Conclusion                                            Bryant Lin, Olivier Gevaert, Li-Jia Li, Ramesh Jain,
+                                                          and Amir M. Rahmani. 2024b. Foundation metrics
+Leveraging personas, LLMs can generate tailored           for evaluating effectiveness of healthcare conversa-
+responses and effectively adapt to a wide range of        tions powered by generative ai. 6
+scenarios. In this survey paper, we summarize two        Mahyar Abbasian, Zhongqi Yang, Elahe Khatibi,
+lines of work – role-playing and personalization –        Pengfei Zhang, Nitish Nagesh, Iman Azimi, Ramesh
+for research of personas in the era of LLMs. We           Jain, and Amir M. Rahmani. 2024c. Knowledge-
+                                                          infused llm-powered conversational health agent: A
+also present various evaluation methods for LLM           case study for diabetes patients. 2, 6
+personality. Lastly, we highlight current challenges
+and promising future directions. We hope our ex-         Josh Achiam, Steven Adler, Sandhini Agarwal, Lama
+                                                           Ahmad, Ilge Akkaya, Florencia Leoni Aleman,
+tensive survey and resources serve as an introduc-         Diogo Almeida, Janko Altenschmidt, Sam Altman,
+tory guide for beginners to the field and a practical      Shyamal Anadkat, et al. 2023. Gpt-4 technical report.
+roadmap to foster future endeavors.                        arXiv preprint arXiv:2303.08774. 17
+Jaewoo Ahn, Taehyun Lee, Junyoung Lim, Jin-Hwa            Jiangjie Chen, Xintao Wang, Rui Xu, Siyu Yuan, Yikai
+   Kim, Sangdoo Yun, Hwaran Lee, and Gunhee Kim.             Zhang, Wei Shi, Jian Xie, Shuang Li, Ruihan Yang,
+   2024. Timechara: Evaluating point-in-time character       Tinghui Zhu, et al. 2024. From persona to person-
+   hallucination of role-playing large language models.      alization: A survey on role-playing language agents.
+   arXiv preprint arXiv:2405.18027. 8                        arXiv preprint arXiv:2404.18231. 1
+
+Jaewoo Ahn, Yeda Song, Sangdoo Yun, and Gun-              Jin Chen, Zheng Liu, Xu Huang, Chenwang Wu, Qi Liu,
+   hee Kim. 2023. Mpchat: Towards multimodal                 Gangwei Jiang, Yuanhao Pu, Yuxuan Lei, Xiaolong
+   persona-grounded conversation. arXiv preprint             Chen, Xingmei Wang, Defu Lian, and Enhong Chen.
+   arXiv:2305.17388. 8                                       2023a. When large language models meet personal-
+                                                             ization: Perspectives of challenges and opportunities.
+Md Adnan Arefeen, Biplob Debnath, and Srimat                 1
+ Chakradhar. 2023. Leancontext: Cost-efficient
+ domain-specific question answering using llms. 6         Siyuan Chen, Mengyue Wu, Kenny Q Zhu, Kunyao
+                                                            Lan, Zhiling Zhang, and Lyuchun Cui. 2023b. Llm-
+Trevor Ashby, Braden K Webb, Gregory Knapp, Jack-           empowered chatbots for psychiatrist and patient sim-
+  son Searle, and Nancy Fulda. 2023. Personalized           ulation: application and evaluation. arXiv preprint
+  quest and dialogue generation in role-playing games:      arXiv:2305.13614. 6
+  A knowledge graph-and language model-based ap-          Wei Chen, Zhiwei Li, Hongyi Fang, Qianyuan Yao,
+  proach. In Proceedings of the 2023 CHI Conference        Cheng Zhong, Jianye Hao, Qi Zhang, Xuanjing
+  on Human Factors in Computing Systems, pages 1–          Huang, Jiajie Peng, and Zhongyu Wei. 2022b. A
+  20. 7                                                    benchmark for automatic medical consultation sys-
+                                                           tem: Frameworks, tasks and datasets. 2
+Jinheon Baek, Nirupama Chandrasekaran, Silviu
+   Cucerzan, Allen herring, and Sujay Kumar Jauhar.       Weize Chen, Yusheng Su, Jingwei Zuo, Cheng Yang,
+   2024. Knowledge-augmented large language models         Chenfei Yuan, Chen Qian, Chi-Min Chan, Yujia
+   for personalized contextual query suggestion. 2, 6      Qin, Yaxi Lu, Ruobing Xie, et al. 2023c. Agent-
+                                                           verse: Facilitating multi-agent collaboration and ex-
+Youssef Bassil. 2012. A simulation model for the water-    ploring emergent behaviors in agents. arXiv preprint
+  fall software development life cycle. arXiv preprint     arXiv:2308.10848. 2, 4, 5, 8
+  arXiv:1205.6904. 3
+                                                          Yang Chen, Ethan Mendes, Sauvik Das, Wei Xu, and
+R Meredith Belbin and Victoria Brown. 2022. Team            Alan Ritter. 2023d. Can language models be in-
+  roles at work. Routledge. 3                               structed to protect personal information? 9
+
+Paweł Budzianowski, Tsung-Hsien Wen, Bo-Hsiang            Zheng Chen, Ziyan Jiang, Fan Yang, Zhankui He, Yu-
+  Tseng, Iñigo Casanueva, Stefan Ultes, Osman Ra-           peng Hou, Eunah Cho, Julian McAuley, Aram Gal-
+  madan, and Milica Gašić. 2018. MultiWOZ - a large-       styan, Xiaohua Hu, and Jie Yang. 2023e. The first
+  scale multi-domain Wizard-of-Oz dataset for task-         workshop on personalized generative ai@ cikm 2023:
+  oriented dialogue modelling. In Proceedings of the        Personalization meets large language models. In Pro-
+  2018 Conference on Empirical Methods in Natural           ceedings of the 32nd ACM International Conference
+  Language Processing, pages 5016–5026, Brussels,           on Information and Knowledge Management, pages
+  Belgium. Association for Computational Linguistics.       5267–5270. 5
+  2, 19
+                                                          Kanzhi Cheng, Qiushi Sun, Yougang Chu, Fangzhi Xu,
+Chi-Min Chan, Weize Chen, Yusheng Su, Jianxuan Yu,          Yantao Li, Jianbing Zhang, and Zhiyong Wu. 2024.
+  Wei Xue, Shanghang Zhang, Jie Fu, and Zhiyuan             Seeclick: Harnessing gui grounding for advanced
+  Liu. 2023. Chateval: Towards better llm-based eval-       visual gui agents. arXiv preprint arXiv:2401.10935.
+  uators through multi-agent debate. arXiv preprint         17
+  arXiv:2308.07201. 2, 4                                  Cheng-Han Chiang and Hung-yi Lee. 2023. Can large
+                                                            language models be an alternative to human evalua-
+Yupeng Chang, Xu Wang, Jindong Wang, Yuan Wu,               tions? arXiv preprint arXiv:2305.01937. 4
+  Linyi Yang, Kaijie Zhu, Hao Chen, Xiaoyuan Yi,
+  Cunxiang Wang, Yidong Wang, Wei Ye, Yue Zhang,          Konstantina Christakopoulou, Alberto Lalama,
+  Yi Chang, Philip S. Yu, Qiang Yang, and Xing Xie.         Cj Adams, Iris Qu, Yifat Amir, Samer Chucri, Pierce
+  2023. A survey on evaluation of large language mod-       Vollucci, Fabio Soldo, Dina Bseiso, Sarah Scodel,
+  els. 8                                                    Lucas Dixon, Ed H. Chi, and Minmin Chen. 2023.
+                                                            Large language models for user interest journeys. 2
+Changyu Chen, Xiting Wang, Xiaoyuan Yi, Fangzhao
+  Wu, Xing Xie, and Rui Yan. 2022a. Personalized          Zhixuan Chu, Hongyan Hao, Xin Ouyang, Simeng
+  chit-chat generation for recommendation using exter-      Wang, Yan Wang, Yue Shen, Jinjie Gu, Qing Cui,
+  nal chat corpora. In Proceedings of the 28th ACM          Longfei Li, Siqiao Xue, James Y Zhang, and Sheng
+  SIGKDD conference on knowledge discovery and              Li. 2023. Leveraging large language models for pre-
+  data mining, pages 2721–2731. 5, 18                       trained recommender systems. 5, 18
+Arman Cohan, Sergey Feldman, Iz Beltagy, Doug               dataset with state corrections and state tracking base-
+  Downey, and Daniel Weld. 2020. SPECTER:                   lines. In Proceedings of the Twelfth Language Re-
+  Document-level representation learning using              sources and Evaluation Conference, pages 422–428,
+  citation-informed transformers. In Proceedings            Marseille, France. European Language Resources
+  of the 58th Annual Meeting of the Association             Association. 19
+  for Computational Linguistics, pages 2270–2282,
+  Online. Association for Computational Linguistics.      Qixiang Fang, Anastasia Giachanou, Ayoub Bagheri,
+  6                                                         Laura Boeschoten, Erik-Jan van Kesteren, Mahdi
+                                                            Shafiee Kamalabad, and Daniel Oberski. 2023. On
+Sunhao Dai, Ninglu Shao, Haiyuan Zhao, Weijie Yu,           text-based personality computing: Challenges and
+  Zihua Si, Chen Xu, Zhongxiang Sun, Xiao Zhang,            future directions. In Findings of the Association for
+  and Jun Xu. 2023. Uncovering chatgpt’s capabilities       Computational Linguistics: ACL 2023, pages 10861–
+  in recommender systems. In Proceedings of the 17th        10879, Toronto, Canada. Association for Computa-
+  ACM Conference on Recommender Systems, RecSys             tional Linguistics. 9
+  ’23. ACM. 2
+                                                          Ivar Frisch and Mario Giulianelli. 2024. LLM agents
+Yuhao Dan, Zhikai Lei, Yiyang Gu, Yong Li, Jianghao          in interaction: Measuring personality consistency
+  Yin, Jiaju Lin, Linhao Ye, Zhiyan Tie, Yougen Zhou,        and linguistic alignment in interacting populations
+  Yilei Wang, et al. 2023. Educhat: A large-scale lan-       of large language models. In Proceedings of the
+  guage model-based chatbot system for intelligent ed-      1st Workshop on Personalization of Generative AI
+  ucation. arXiv preprint arXiv:2308.02773. 2, 6             Systems (PERSONALIZE 2024), pages 102–111, St.
+Tom DeMarco and Tim Lister. 2013. Peopleware: pro-           Julians, Malta. Association for Computational Lin-
+  ductive projects and teams. Addison-Wesley. 3              guistics. 7
+
+Xiang Deng, Yu Gu, Boyuan Zheng, Shijie Chen, Sam         Yao Fu, Hao Peng, Tushar Khot, and Mirella Lapata.
+  Stevens, Boshi Wang, Huan Sun, and Yu Su. 2024.           2023. Improving language model negotiation with
+  Mind2web: Towards a generalist agent for the web.         self-play and in-context learning from ai feedback.
+  Advances in Neural Information Processing Systems,        arXiv preprint arXiv:2305.10142. 2, 3, 4, 5
+  36. 2, 17, 18
+                                                          Gaia Gambarelli, Aldo Gangemi, and Rocco Tripodi.
+Ameet Deshpande, EunJeong Hwang, Vishvak Mura-              2023. Is your model sensitive? spedac: A new re-
+ hari, Joon Sung Park, Diyi Yang, Ashish Sabharwal,         source for the automatic classification of sensitive
+ Karthik Narasimhan, and Ashwin Kalyan, editors.            personal data. IEEE Access, 11:10864–10880. 9
+ 2024. Proceedings of the 1st Workshop on Person-
+ alization of Generative AI Systems (PERSONALIZE          Shijie Geng, Shuchang Liu, Zuohui Fu, Yingqiang Ge,
+ 2024). Association for Computational Linguistics, St.      and Yongfeng Zhang. 2022. Recommendation as
+ Julians, Malta. 5                                          language processing (rlp): A unified pretrain, person-
+                                                            alized prompt & predict paradigm (p5). In Proceed-
+Ameet Deshpande, Vishvak Murahari, Tanmay Rajpuro-          ings of the 16th ACM Conference on Recommender
+  hit, Ashwin Kalyan, and Karthik Narasimhan. 2023.         Systems, pages 299–315. 18
+ Toxicity in chatgpt: Analyzing persona-assigned lan-
+  guage models. 2, 5, 8                                   Hannah Gonzalez, Jiening Li, Helen Jin, Jiaxuan Ren,
+                                                            Hongyu Zhang, Ayotomiwa Akinyele, Adrian Wang,
+Emily Dinan, Varvara Logacheva, Valentin Malykh,            Eleni Miltsakaki, Ryan Baker, and Chris Callison-
+  Alexander Miller, Kurt Shuster, Jack Urbanek,             Burch. 2023. Automatically generated summaries
+  Douwe Kiela, Arthur Szlam, Iulian Serban, Ryan            of video lectures may enhance students’ learning
+  Lowe, Shrimai Prabhumoye, Alan W Black, Alexan-           experience. In Proceedings of the 18th Workshop
+  der Rudnicky, Jason Williams, Joelle Pineau, Mikhail      on Innovative Use of NLP for Building Educational
+  Burtsev, and Jason Weston. 2019. The second con-          Applications (BEA 2023), pages 382–393, Toronto,
+  versational intelligence challenge (convai2). 2, 19       Canada. Association for Computational Linguistics.
+Yihong Dong, Xue Jiang, Zhi Jin, and Ge Li. 2023.           6
+  Self-collaboration code generation via chatgpt. arXiv
+  preprint arXiv:2304.07590. 2, 3                         Taicheng Guo, Xiuying Chen, Yaqi Wang, Ruidi Chang,
+                                                             Shichao Pei, Nitesh V Chawla, Olaf Wiest, and Xi-
+Florian E Dorner, Tom Sühr, Samira Samadi, and Au-           angliang Zhang. 2024. Large language model based
+  gustin Kelava. 2023. Do personality tests gener-           multi-agents: A survey of progress and challenges.
+  alize to large language models? arXiv preprint             arXiv preprint arXiv:2402.01680. 3, 4
+  arXiv:2311.05297. 7, 8
+                                                          Shashank Gupta, Vaishnavi Shrivastava, Ameet Desh-
+Mihail Eric, Rahul Goel, Shachi Paul, Abhishek Sethi,       pande, Ashwin Kalyan, Peter Clark, Ashish Sabhar-
+  Sanchit Agarwal, Shuyang Gao, Adarsh Kumar, Anuj          wal, and Tushar Khot. 2023. Bias runs deep: Implicit
+  Goyal, Peter Ku, and Dilek Hakkani-Tur. 2020. Mul-        reasoning biases in persona-assigned llms. arXiv
+  tiWOZ 2.1: A consolidated multi-domain dialogue           preprint arXiv:2311.04892. 2, 5, 8
+Izzeddin Gur, Hiroki Furuta, Austin Huang, Mustafa               Companion Proceedings of the ACM on Web Confer-
+   Safdari, Yutaka Matsuo, Douglas Eck, and Aleksan-             ence 2024, pages 103–111. 5
+   dra Faust. 2023. A real-world webagent with plan-
+   ning, long context understanding, and program syn-          Zhiyuan Hu, Yue Feng, Yang Deng, Zekun Li, See-
+   thesis. arXiv preprint arXiv:2307.12856. 17                   Kiong Ng, Anh Tuan Luu, and Bryan Hooi. 2023. En-
+                                                                 hancing large language model induced task-oriented
+Izzeddin Gur, Ofir Nachum, Yingjie Miao, Mustafa                 dialogue systems through look-forward motivated
+   Safdari, Austin Huang, Aakanksha Chowdhery, Sha-              goals. 2, 7
+   ran Narang, Noah Fiedel, and Aleksandra Faust.
+   2022. Understanding html with large language mod-           Jen-tse Huang, Wenxuan Wang, Eric John Li, Man Ho
+   els. arXiv preprint arXiv:2210.03945. 17                       LAM, Shujie Ren, Youliang Yuan, Wenxiang Jiao,
+                                                                  Zhaopeng Tu, and Michael Lyu. 2023. On the human-
+Ji-Eun Han, Jun-Seok Koh, Hyeon-Tae Seo, Du-                      ity of conversational ai: Evaluating the psychological
+   Seong Chang, and Kyung-Ah Sohn. 2024. Psydial:                 portrayal of llms. In The Twelfth International Con-
+   Personality-based synthetic dialogue generation us-            ference on Learning Representations. 2
+   ing large language models. 19
+                                                               Jie Huang, Hanyin Shao, and Kevin Chen-Chuan Chang.
+Shibo Hao, Yi Gu, Haotian Luo, Tianyang Liu, Xiyan                2022. Are large pre-trained language models leak-
+  Shao, Xinyuan Wang, Shuhua Xie, Haodi Ma,                       ing your personal information? In Findings of the
+  Adithya Samavedhi, Qiyue Gao, Zhen Wang, and                    Association for Computational Linguistics: EMNLP
+  Zhiting Hu. 2024. Llm reasoners: New evaluation,                2022, pages 2038–2047, Abu Dhabi, United Arab
+  library, and analysis of step-by-step reasoning with            Emirates. Association for Computational Linguistics.
+  large language models. 6                                        9
+
+F Maxwell Harper and Joseph A Konstan. 2015. The               Stefan E Huber, Kristian Kiili, Steve Nebel, Richard M
+  movielens datasets: History and context. Acm trans-             Ryan, Michael Sailer, and Manuel Ninaus. 2024.
+  actions on interactive intelligent systems (tiis), 5(4):1–      Leveraging the potential of large language models in
+  19. 2, 18, 19                                                   education through playful and game-based learning.
+                                                                  Educational Psychology Review, 36(1):1–20. 6
+Vrindavan Harrison, Lena Reed, Shereen Oraby, and
+                                                               Vojtěch Hudeček and Ondrej Dusek. 2023. Are large
+  Marilyn Walker. 2019. Maximizing stylistic control
+                                                                 language models all you need for task-oriented dia-
+  and semantic accuracy in NLG: Personality varia-
+                                                                 logue? In Proceedings of the 24th Annual Meeting
+  tion and discourse contrast. In Proceedings of the
+                                                                 of the Special Interest Group on Discourse and Dia-
+  1st Workshop on Discourse Structure in Neural NLG,
+                                                                 logue, pages 216–228, Prague, Czechia. Association
+  pages 1–12, Tokyo, Japan. Association for Computa-
+                                                                 for Computational Linguistics. 7
+  tional Linguistics. 7
+                                                               Daniil Huryn, William M. Hutsell, and Jinho D. Choi.
+Wanwei He, Yinpei Dai, Yinhe Zheng, Yuchuan Wu,                  2022. Automatic generation of large-scale multi-turn
+ Zheng Cao, Dermot Liu, Peng Jiang, Min Yang, Fei                dialogues from Reddit. In Proceedings of the 29th
+ Huang, Luo Si, Jian Sun, and Yongbin Li. 2022.                  International Conference on Computational Linguis-
+ Galaxy: A generative pre-trained model for task-                tics, pages 3360–3373, Gyeongju, Republic of Korea.
+ oriented dialog with semi-supervised learning and               International Committee on Computational Linguis-
+ explicit policy injection. 19                                   tics. 7
+Sirui Hong, Xiawu Zheng, Jonathan Chen, Yuheng                 Jaeho Jeon and Seongyong Lee. 2023. Large lan-
+   Cheng, Jinlin Wang, Ceyao Zhang, Zili Wang, Steven             guage models in education: A focus on the com-
+   Ka Shing Yau, Zijuan Lin, Liyang Zhou, et al. 2023a.           plementary relationship between human teachers and
+   Metagpt: Meta programming for multi-agent collabo-             chatgpt. Education and Information Technologies,
+   rative framework. arXiv preprint arXiv:2308.00352.             28(12):15873–15892. 6
+   2, 3, 4, 5
+                                                               Guangyuan Jiang, Manjie Xu, Song-Chun Zhu, Wen-
+Wenyi Hong, Weihan Wang, Qingsong Lv, Jiazheng                   juan Han, Chi Zhang, and Yixin Zhu. 2024. Evaluat-
+ Xu, Wenmeng Yu, Junhui Ji, Yan Wang, Zihan Wang,                ing and inducing personality in pre-trained language
+ Yuxiao Dong, Ming Ding, et al. 2023b. Cogagent: A               models. Advances in Neural Information Processing
+ visual language model for gui agents. arXiv preprint            Systems, 36. 7, 9
+ arXiv:2312.08914. 17
+                                                               Hang Jiang, Xiajie Zhang, Xubo Cao, and Jad Kabbara.
+Yupeng Hou, Junjie Zhang, Zihan Lin, Hongyu Lu,                  2023. Personallm: Investigating the ability of large
+  Ruobing Xie, Julian McAuley, and Wayne Xin Zhao.               language models to express big five personality traits.
+  2024. Large language models are zero-shot rankers              arXiv preprint arXiv:2305.02547. 2, 7
+  for recommender systems. 6, 8, 18
+                                                               Haibo Jin, Ruoxi Chen, Andy Zhou, Jinyin Chen, Yang
+Jun Hu, Wenwen Xia, Xiaolu Zhang, Chilin Fu, We-                 Zhang, and Haohan Wang. 2024a. Guard: Role-
+  ichang Wu, Zhaoxin Huan, Ang Li, Zuoli Tang, and               playing to generate natural-language jailbreakings to
+  Jun Zhou. 2024. Enhancing sequential recommenda-               test guideline adherence of large language models.
+  tion via llm-based semantic embedding learning. In             arXiv preprint arXiv:2402.03299. 8
+Mingyu Jin, Qinkai Yu, Dong Shu, Chong Zhang,            Yanran Li, Hui Su, Xiaoyu Shen, Wenjie Li, Ziqiang
+  Lizhou Fan, Wenyue Hua, Suiyuan Zhu, Yanda               Cao, and Shuzi Niu. 2017. DailyDialog: A manually
+  Meng, Zhenting Wang, Mengnan Du, and Yongfeng            labelled multi-turn dialogue dataset. In Proceedings
+  Zhang. 2024b. Health-llm: Personalized retrieval-        of the Eighth International Joint Conference on Nat-
+  augmented disease prediction system. 2, 6                ural Language Processing (Volume 1: Long Papers),
+                                                           pages 986–995, Taipei, Taiwan. Asian Federation of
+Enkelejda Kasneci, Kathrin Seßler, Stefan Küchemann,       Natural Language Processing. 19
+  Maria Bannert, Daryna Dementieva, Frank Fischer,
+  Urs Gasser, Georg Groh, Stephan Günnemann, Eyke        Yongqi Li, Xinyu Lin, Wenjie Wang, Fuli Feng, Liang
+  Hüllermeier, et al. 2023. Chatgpt for good? on op-       Pang, Wenjie Li, Liqiang Nie, Xiangnan He, and Tat-
+  portunities and challenges of large language models      Seng Chua. 2024b. A survey of generative search and
+  for education. Learning and individual differences,      recommendation in the era of large language models.
+  103:102274. 2, 6                                         6
+Geunwoo Kim, Pierre Baldi, and Stephen McAleer.          Yunxiang Li, Zihan Li, Kai Zhang, Ruilong Dan, Steve
+  2024a. Language models can solve computer tasks.         Jiang, and You Zhang. 2023d. Chatdoctor: A medical
+  Advances in Neural Information Processing Systems,       chat model fine-tuned on a large language model
+  36. 17                                                   meta-ai (llama) using medical domain knowledge. 2
+Hana Kim, Kai Tzu-iunn Ong, Seoyeon Kim, Dongha          Zekun Li, Baolin Peng, Pengcheng He, Michel Galley,
+  Lee, and Jinyoung Yeo. 2024b. Commonsense-               Jianfeng Gao, and Xifeng Yan. 2024c. Guiding large
+  augmented memory construction and management in          language models via directional stimulus prompting.
+  long-term conversations via context-aware persona        Advances in Neural Information Processing Systems,
+  refinement. arXiv preprint arXiv:2401.14215. 2, 8        36. 2, 7
+Jing Yu Koh, Robert Lo, Lawrence Jang, Vikram            Valentin Liévin, Christoffer Egeberg Hother, An-
+   Duvvur, Ming Chong Lim, Po-Yu Huang, Graham             dreas Geert Motzfeldt, and Ole Winther. 2024. Can
+   Neubig, Shuyan Zhou, Ruslan Salakhutdinov, and          large language models reason about medical ques-
+   Daniel Fried. 2024. Visualwebarena: Evaluating mul-     tions? Patterns, 5(3). 4
+   timodal agents on realistic visual web tasks. arXiv
+   preprint arXiv:2401.13649. 17, 18                     Yen-Ting Lin and Yun-Nung Chen. 2023. LLM-eval:
+                                                           Unified multi-dimensional automatic evaluation for
+Taeyoon Kwon, Kai Tzu-iunn Ong, Dongjin Kang,              open-domain conversations with large language mod-
+  Seungjun Moon, Jeong Ryong Lee, Dosik Hwang,             els. In Proceedings of the 5th Workshop on NLP for
+  Beomseok Sohn, Yongsik Sim, Dongha Lee, and Jiny-        Conversational AI (NLP4ConvAI 2023), pages 47–
+  oung Yeo. 2024. Large language models are clinical       58, Toronto, Canada. Association for Computational
+  reasoners: Reasoning-aware diagnosis framework           Linguistics. 4
+  with prompt-generated rationales. In Proceedings of
+  the AAAI Conference on Artificial Intelligence, vol-   Jerry Liu. 2022. LlamaIndex. 6
+  ume 38, pages 18417–18425. 4
+                                                         Junling Liu, Chao Liu, Peilin Zhou, Renjie Lv, Kang
+Guohao Li, Hasan Hammoud, Hani Itani, Dmitrii              Zhou, and Yan Zhang. 2023a. Is chatgpt a good
+  Khizbullin, and Bernard Ghanem. 2024a. Camel:            recommender? a preliminary study. 18
+  Communicative agents for" mind" exploration of
+  large language model society. Advances in Neural       Junpeng Liu, Yifan Song, Bill Yuchen Lin, Wai Lam,
+  Information Processing Systems, 36. 2, 5, 8              Graham Neubig, Yuanzhi Li, and Xiang Yue. 2024.
+                                                           Visualwebbench: How far have multimodal llms
+Lei Li, Yongfeng Zhang, and Li Chen. 2021. Person-         evolved in web page understanding and grounding?
+  alized transformer for explainable recommendation.       arXiv preprint arXiv:2404.05955. 18
+  arXiv preprint arXiv:2105.11601. 18
+                                                         Qian Liu, Yihong Chen, Bei Chen, Jian-Guang Lou,
+Lei Li, Yongfeng Zhang, and Li Chen. 2023a. Person-        Zixuan Chen, Bin Zhou, and Dongmei Zhang. 2020.
+  alized prompt learning for explainable recommen-         You impress me: Dialogue generation via mutual per-
+  dation. ACM Transactions on Information Systems,         sona perception. In Proceedings of the 58th Annual
+  41(4):1–26. 5, 18, 19                                    Meeting of the Association for Computational Lin-
+                                                           guistics, pages 1417–1427, Online. Association for
+Pan Li, Yuyan Wang, Ed H. Chi, and Minmin Chen.            Computational Linguistics. 2, 7
+  2023b. Prompt tuning large language models on
+  personalized aspect extraction for recommendations.    Qijiong Liu, Nuo Chen, Tetsuya Sakai, and Xiao-Ming
+  5, 18                                                    Wu. 2023b. Once: Boosting content-based recom-
+                                                           mendation with both open- and closed-source large
+Qingyao Li, Lingyue Fu, Weiming Zhang, Xianyu              language models. 2
+  Chen, Jingwei Yu, Wei Xia, Weinan Zhang, Ruim-
+  ing Tang, and Yong Yu. 2023c. Adapting large           Ehsan Lotfi, Maxime De Bruyn, Jeska Buhmann, and
+  language models for education: Foundational capa-        Walter Daelemans. 2024. Personalitychat: Conver-
+  bilities, potentials, and challenges. arXiv preprint     sation distillation for personalized dialog modeling
+  arXiv:2401.08664. 9                                      with facts and traits. 19
+Jiasen Lu, Jianwei Yang, Dhruv Batra, and Devi Parikh.     Chen Qian, Xin Cong, Cheng Yang, Weize Chen,
+   2017. Hierarchical question-image co-attention for        Yusheng Su, Juyuan Xu, Zhiyuan Liu, and Maosong
+   visual question answering. 7                              Sun. 2023. Communicative agents for software de-
+                                                             velopment. arXiv preprint arXiv:2307.07924. 2, 3,
+Nils Lukas, Ahmed Salem, Robert Sim, Shruti Tople,           4
+  Lukas Wutschitz, and Santiago Zanella-Béguelin.
+  2023. Analyzing leakage of personally identifiable       Osman Ramadan, Paweł Budzianowski, and Milica
+  information in language models. 9                          Gašić. 2018. Large-scale multi-domain belief track-
+                                                             ing with knowledge sharing. In Proceedings of the
+Aman Madaan, Niket Tandon, Prakhar Gupta, Skyler
+                                                             56th Annual Meeting of the Association for Com-
+ Hallinan, Luyu Gao, Sarah Wiegreffe, Uri Alon,
+                                                             putational Linguistics (Volume 2: Short Papers),
+ Nouha Dziri, Shrimai Prabhumoye, Yiming Yang,
+                                                             pages 432–437, Melbourne, Australia. Association
+ et al. 2024. Self-refine: Iterative refinement with
+                                                             for Computational Linguistics. 19
+ self-feedback. Advances in Neural Information Pro-
+ cessing Systems, 36. 1
+                                                           Abhinav Rastogi, Xiaoxue Zang, Srinivas Sunkara,
+Madison Milne-Ives, Caroline de Cock, Ernest Lim,            Raghav Gupta, and Pranav Khaitan. 2020. Towards
+ Melissa Harper Shehadeh, Nick de Pennington, Guy            scalable multi-domain conversational agents: The
+ Mole, Eduardo Normando, and Edward Meinert.                 schema-guided dialogue dataset. In Proceedings of
+ 2020. The effectiveness of artificial intelligence con-     the AAAI Conference on Artificial Intelligence, vol-
+ versational agents in health care: systematic review.       ume 34, pages 8689–8696. 2, 19
+ Journal of medical Internet research, 22(10):e20346.
+ 6                                                         Chris Richardson, Yao Zhang, Kellen Gillespie, Sudipta
+                                                             Kar, Arshdeep Singh, Zeynab Raeesy, Omar Zia
+Johannes E. M. Mosig, Shikib Mehri, and Thomas               Khan, and Abhinav Sethy. 2023. Integrating sum-
+  Kober. 2020. Star: A schema-guided dialog dataset          marization and retrieval for enhanced personalization
+  for transfer learning. 19                                  via large language models. 8
+Jianmo Ni, Jiacheng Li, and Julian McAuley. 2019. Jus-     Khaled Saab, Tao Tu, Wei-Hung Weng, Ryutaro Tanno,
+   tifying recommendations using distantly-labeled re-       David Stutz, Ellery Wulczyn, Fan Zhang, Tim
+   views and fine-grained aspects. In Proceedings of         Strother, Chunjong Park, Elahe Vedadi, et al. 2024.
+   the 2019 conference on empirical methods in natural       Capabilities of gemini models in medicine. arXiv
+   language processing and the 9th international joint       preprint arXiv:2404.18416. 6
+   conference on natural language processing (EMNLP-
+   IJCNLP), pages 188–197. 18, 19
+                                                           Alireza Salemi and Hamed Zamani. 2024. Towards
+OpenAI. 2022. Introducing chatgpt. https://openai.           a search engine for machines: Unified ranking for
+  com/index/chatgpt/. 1                                      multiple retrieval-augmented large language models.
+                                                             arXiv preprint arXiv:2405.00175. 6
+Keyu Pan and Yawen Zeng. 2023. Do llms possess a per-
+  sonality? making the mbti test an amazing evaluation     Vinay Samuel, Henry Peng Zou, Yue Zhou, Shreyas
+  for large language models. 2, 7                            Chaudhari, Ashwin Kalyan, Tanmay Rajpurohit,
+                                                             Ameet Deshpande, Karthik Narasimhan, and Vishvak
+PapersWithCode. 2020. Baidu personachat dataset.             Murahari. 2024. Personagym: Evaluating persona
+  https://paperswithcode.com/dataset/                        agents and llms. arXiv preprint arXiv:2407.18416.
+  baidu-personachat. 19                                      8, 9
+Joon Sung Park, Joseph O’Brien, Carrie Jun Cai, Mered-     Rusheb Shah, Quentin Feuillade-Montixi, Soroush Pour,
+  ith Ringel Morris, Percy Liang, and Michael S Bern-        Arush Tagade, Stephen Casper, and Javier Rando.
+  stein. 2023. Generative agents: Interactive simulacra      2023. Scalable and transferable black-box jailbreaks
+  of human behavior. In Proceedings of the 36th An-          for language models via persona modulation. 8
+  nual ACM Symposium on User Interface Software
+  and Technology, pages 1–22. 2, 3, 4
+                                                           Nikhil Sharma, Q Vera Liao, and Ziang Xiao. 2024.
+Minju Park, Sojung Kim, Seunghyun Lee, Soonwoo               Generative echo chamber? effects of llm-powered
+  Kwon, and Kyuseok Kim. 2024. Empowering per-               search systems on diverse information seeking. arXiv
+  sonalized learning through a conversation-based tu-        preprint arXiv:2402.05880. 2, 6
+  toring system with student modeling. arXiv preprint
+  arXiv:2403.14071. 2, 6                                   Shady Shehata, David Santandreu Calonge, Philip Pur-
+                                                             nell, and Mark Thompson. 2023. Enhancing video-
+Kai Petersen, Claes Wohlin, and Dejan Baca. 2009.            based learning using knowledge tracing: Personaliz-
+  The waterfall model in large-scale development.            ing students’ learning experience with ORBITS. In
+  In Product-Focused Software Process Improvement:           Proceedings of the 18th Workshop on Innovative Use
+  10th International Conference, PROFES 2009, Oulu,          of NLP for Building Educational Applications (BEA
+  Finland, June 15-17, 2009. Proceedings 10, pages           2023), pages 100–107, Toronto, Canada. Association
+  386–400. Springer. 3                                       for Computational Linguistics. 2, 6
+Noah Shinn, Federico Cassano, Ashwin Gopinath,              Xiangru Tang, Anni Zou, Zhuosheng Zhang, Yilun
+  Karthik Narasimhan, and Shunyu Yao. 2024. Re-               Zhao, Xingyao Zhang, Arman Cohan, and Mark Ger-
+  flexion: Language agents with verbal reinforcement          stein. 2023a. Medagents: Large language models as
+  learning. Advances in Neural Information Process-           collaborators for zero-shot medical reasoning. arXiv
+  ing Systems, 36. 1, 3                                       preprint arXiv:2311.10537. 2, 4, 5
+
+Karan Singhal, Shekoofeh Azizi, Tao Tu, S Sara Mah-         Yihong Tang, Bo Wang, Miao Fang, Dongming Zhao,
+  davi, Jason Wei, Hyung Won Chung, Nathan Scales,            Kun Huang, Ruifang He, and Yuexian Hou. 2023b.
+  Ajay Tanwani, Heather Cole-Lewis, Stephen Pfohl,            Enhancing personalized dialogue generation with
+  et al. 2023. Large language models encode clinical          contrastive latent variables: Combining sparse and
+  knowledge. Nature, 620(7972):172–180. 6                     dense persona. In Proceedings of the 61st Annual
+                                                              Meeting of the Association for Computational Lin-
+Haoyu Song, Wei-Nan Zhang, Jingwen Hu, and Ting               guistics (Volume 1: Long Papers), pages 5456–5468,
+  Liu. 2020. Generating persona consistent dialogues          Toronto, Canada. Association for Computational Lin-
+  by exploiting natural language inference. Proceed-          guistics. 2, 7
+  ings of the AAAI Conference on Artificial Intelligence,
+  34(05):8878–8885. 7                                       Gemini Team, Rohan Anil, Sebastian Borgeaud,
+                                                              Yonghui Wu, Jean-Baptiste Alayrac, Jiahui Yu,
+Xiaoyang Song, Yuta Adachi, Jessie Feng, Mouwei Lin,          Radu Soricut, Johan Schalkwyk, Andrew M Dai,
+  Linhao Yu, Frank Li, Akshat Gupta, Gopala Anu-              Anja Hauth, et al. 2023. Gemini: a family of
+  manchipalli, and Simerjot Kaur. 2024. Identifying           highly capable multimodal models. arXiv preprint
+  multiple personalities in large language models with        arXiv:2312.11805. 17
+  external evaluation. 2, 7, 9
+                                                            Quan Tu, Chuanqi Chen, Jinpeng Li, Yanran Li, Shuo
+Aleksandra Sorokovikova, Sharwin Rezagholi, Natalia           Shang, Dongyan Zhao, Ran Wang, and Rui Yan.
+  Fedorova, and Ivan P. Yamshchikov. 2024. LLMs               2023. Characterchat: Learning towards conversa-
+  simulate big5 personality traits: Further evidence.         tional ai with personalized social support. arXiv
+  In Proceedings of the 1st Workshop on Personaliza-          preprint arXiv:2308.10278. 19
+  tion of Generative AI Systems (PERSONALIZE 2024),
+  pages 83–87, St. Julians, Malta. Association for Com-     Anvesh Rao Vijjini, Somnath Basu Roy Chowdhury, and
+  putational Linguistics. 2, 7                                Snigdha Chaturvedi. 2024. Exploring safety-utility
+                                                              trade-offs in personalized language models. arXiv
+Sofia Eleni Spatharioti, David M. Rothschild, Daniel G.       preprint arXiv:2406.11107. 8
+  Goldstein, and Jake M. Hofman. 2023. Comparing
+                                                            Guanzhi Wang, Yuqi Xie, Yunfan Jiang, Ajay Man-
+  traditional and llm-based search for consumer choice:
+                                                              dlekar, Chaowei Xiao, Yuke Zhu, Linxi Fan, and An-
+  A randomized experiment. 2, 6
+                                                              ima Anandkumar. 2023a. Voyager: An open-ended
+Elizabeth C Stade, Shannon Wiltsey Stirman, Lyle H            embodied agent with large language models. arXiv
+   Ungar, Cody L Boland, H Andrew Schwartz, David B           preprint arXiv:2305.16291. 2, 3, 4
+  Yaden, João Sedoc, Robert J DeRubeis, Robb Willer,        Jeffrey G. Wang, Jason Wang, Marvin Li, and Seth Neel.
+   and Johannes C Eichstaedt. 2024. Large language             2024a. Pandora’s white-box: Increased training data
+   models could change the future of behavioral health-        leakage in open llms. ArXiv, abs/2402.17012. 9
+   care: a proposal for responsible development and
+   evaluation. npj Mental Health Research, 3(1):12. 6       Lei Wang and Ee-Peng Lim. 2023. Zero-shot next-item
+                                                              recommendation using large pretrained language
+Hiroaki Sugiyama, Masahiro Mizukami, Tsunehiro Ari-           models. 5, 18
+  moto, Hiromi Narimatsu, Yuya Chiba, Hideharu
+  Nakajima, and Toyomi Meguro. 2021. Empirical              Shen Wang, Tianlong Xu, Hang Li, Chaoli Zhang,
+  analysis of training strategies of transformer-based        Joleen Liang, Jiliang Tang, Philip S Yu, and Qing-
+  japanese chit-chat systems. 19                              song Wen. 2024b. Large language models for ed-
+                                                              ucation: A survey and outlook. arXiv preprint
+Chenkai Sun, Ke Yang, Revanth Gangi Reddy, Yi R.              arXiv:2403.18105. 2, 6
+  Fung, Hou Pong Chan, ChengXiang Zhai, and Heng
+  Ji. 2024. Persona-db: Efficient large language model      Xintao Wang, Yunze Xiao, Jen tse Huang, Siyu Yuan,
+  personalization for response prediction with collabo-       Rui Xu, Haoran Guo, Quan Tu, Yaying Fei, Ziang
+  rative data refinement. 8                                   Leng, Wei Wang, Jiangjie Chen, Cheng Li, and
+                                                              Yanghua Xiao. 2024c. Incharacter: Evaluating per-
+M Swift and J Allen. 2010. Towards a personal health          sonality fidelity in role-playing agents through psy-
+  management assistant. Journal of biomedical infor-          chological interviews. 7
+  matics, 43(5):S13–S16. 9
+                                                            Yancheng Wang, Ziyan Jiang, Zheng Chen, Fan Yang,
+Zhaoxuan Tan, Qingkai Zeng, Yijun Tian, Zheyuan Liu,          Yingxue Zhou, Eunah Cho, Xing Fan, Xiaojiang
+  Bing Yin, and Meng Jiang. 2024. Democratizing               Huang, Yanbin Lu, and Yingzhen Yang. 2024d. Rec-
+  large language models via personalized parameter-           mind: Large language model powered agent for rec-
+  efficient fine-tuning. 8                                    ommendation. 6
+Yufei Wang, Wanjun Zhong, Liangyou Li, Fei Mi, Xing-      Xuhai Xu, Bingsheng Yao, Yuanzhe Dong, Saadia
+  shan Zeng, Wenyong Huang, Lifeng Shang, Xin               Gabriel, Hong Yu, James Hendler, Marzyeh Ghas-
+  Jiang, and Qun Liu. 2023b. Aligning large lan-            semi, Anind K Dey, and Dakuo Wang. 2024. Mental-
+  guage models with human: A survey. arXiv preprint         llm: Leveraging large language models for mental
+  arXiv:2307.12966. 4                                       health prediction via online text data. Proceedings
+                                                            of the ACM on Interactive, Mobile, Wearable and
+Zhenhailong Wang, Shaoguang Mao, Wenshan Wu,                Ubiquitous Technologies, 8(1):1–32. 6
+  Tao Ge, Furu Wei, and Heng Ji. 2023c. Unleash-
+  ing cognitive synergy in large language models:         Dongjie Yang, Ruifeng Yuan, Yuantao Fan, Yifei Yang,
+  A task-solving agent through multi-persona self-          Zili Wang, Shusen Wang, and Hai Zhao. 2023a. Re-
+  collaboration. arXiv preprint arXiv:2307.05300,           fGPT: Dialogue generation of GPT, by GPT, and for
+  1(2):3. 8                                                 GPT. In Findings of the Association for Computa-
+                                                            tional Linguistics: EMNLP 2023, pages 2511–2535,
+Zhilin Wang, Yu Ying Chiu, and Yu Cheung Chiu.              Singapore. Association for Computational Linguis-
+  2023d. Humanoid agents: Platform for simulat-             tics. 2, 7
+  ing human-like generative agents. arXiv preprint
+  arXiv:2310.05418. 2, 3                                  Fan Yang, Zheng Chen, Ziyan Jiang, Eunah Cho, Xi-
+                                                            aojiang Huang, and Yanbin Lu. 2023b. Palr: Per-
+                                                            sonalization aware llms for recommendation. 2, 5,
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten            18
+   Bosma, Brian Ichter, Fei Xia, Ed Chi, Quoc Le, and
+   Denny Zhou. 2023. Chain-of-thought prompting elic-     Shunyu Yao, Howard Chen, John Yang, and Karthik
+   its reasoning in large language models. 1                Narasimhan. 2022a. Webshop: Towards scalable
+                                                            real-world web interaction with grounded language
+Wei Wei, Quoc Le, Andrew Dai, and Jia Li. 2018. Air-        agents. Advances in Neural Information Processing
+  Dialogue: An environment for goal-oriented dialogue       Systems, 35:20744–20757. 18
+  research. In Proceedings of the 2018 Conference on
+ Empirical Methods in Natural Language Processing,        Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran,
+  pages 3844–3854, Brussels, Belgium. Association           Tom Griffiths, Yuan Cao, and Karthik Narasimhan.
+  for Computational Linguistics. 19                         2024. Tree of thoughts: Deliberate problem solving
+                                                            with large language models. Advances in Neural
+Cheng-Kuang Wu, Wei-Lin Chen, and Hsin-Hsi Chen.            Information Processing Systems, 36. 3
+  2023a. Large language models perform diagnostic
+  reasoning. arXiv preprint arXiv:2307.08922. 2, 4        Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak
+                                                            Shafran, Karthik R Narasimhan, and Yuan Cao.
+Fangzhao Wu, Ying Qiao, Jiun-Hung Chen, Chuhan              2022b. React: Synergizing reasoning and acting
+  Wu, Tao Qi, Jianxun Lian, Danyang Liu, Xing Xie,          in language models. In The Eleventh International
+  Jianfeng Gao, Winnie Wu, and Ming Zhou. 2020.             Conference on Learning Representations. 3
+  MIND: A large-scale dataset for news recommenda-
+  tion. In Proceedings of the 58th Annual Meeting of      Yelp. 2013. Yelp dataset. https://www.yelp.com/
+  the Association for Computational Linguistics, pages      dataset. 19
+  3597–3606, Online. Association for Computational
+  Linguistics. 18, 19                                     Xiaoxue Zang, Abhinav Rastogi, Srinivas Sunkara,
+                                                            Raghav Gupta, Jianguo Zhang, and Jindong Chen.
+                                                            2020. MultiWOZ 2.2 : A dialogue dataset with
+Ning Wu, Ming Gong, Linjun Shou, Shining Liang,             additional annotation corrections and state tracking
+  and Daxin Jiang. 2023b. Large language models are         baselines. In Proceedings of the 2nd Workshop on
+  diverse role-players for summarization evaluation. In     Natural Language Processing for Conversational AI,
+  CCF International Conference on Natural Language          pages 109–117, Online. Association for Computa-
+  Processing and Chinese Computing, pages 695–707.          tional Linguistics. 19, 20
+  Springer. 2, 4
+                                                          Guangtao Zeng, Wenmian Yang, Zeqian Ju, Yue Yang,
+Zhiheng Xi, Wenxiang Chen, Xin Guo, Wei He, Yiwen           Sicheng Wang, Ruisi Zhang, Meng Zhou, Jiaqi
+  Ding, Boyang Hong, Ming Zhang, Junzhe Wang,               Zeng, Xiangyu Dong, Ruoyu Zhang, Hongchao Fang,
+  Senjie Jin, Enyu Zhou, et al. 2023. The rise and          Penghui Zhu, Shu Chen, and Pengtao Xie. 2020.
+  potential of large language model based agents: A         MedDialog: Large-scale medical dialogue datasets.
+  survey. arXiv preprint arXiv:2309.07864. 4                In Proceedings of the 2020 Conference on Empirical
+                                                            Methods in Natural Language Processing (EMNLP),
+Canwen Xu, Daya Guo, Nan Duan, and Julian McAuley.          pages 9241–9250, Online. Association for Computa-
+  2023. Baize: An open-source chat model with               tional Linguistics. 2
+  parameter-efficient tuning on self-chat data. In Pro-
+  ceedings of the 2023 Conference on Empirical Meth-      Junjie Zhang, Ruobing Xie, Yupeng Hou, Wayne Xin
+  ods in Natural Language Processing, pages 6268–           Zhao, Leyu Lin, and Ji-Rong Wen. 2023. Recom-
+  6278, Singapore. Association for Computational Lin-       mendation as instruction following: A large language
+  guistics. 7                                               model empowered recommendation approach. 6, 18
+Kai Zhang, Yangyang Kang, Fubang Zhao, and Xi-              Yujia Zhou, Qiannan Zhu, Jiajie Jin, and Zhicheng Dou.
+  aozhong Liu. 2024a. Llm-based medical assistant             2024. Cognitive personalized search integrating large
+  personalization with short- and long-term memory            language models with an efficient memory mecha-
+  coordination. 2, 6                                          nism. arXiv preprint arXiv:2402.10548. 2, 6
+
+Kai Zhang, Lizhi Qing, Yangyang Kang, and Xiaozhong         Noah Ziems, Wenhao Yu, Zhihan Zhang, and Meng
+  Liu. 2024b. Personalized llm response generation            Jiang. 2023. Large language models are built-in au-
+  with parameterized memory injection. 8                      toregressive search engines. 2, 6
+
+Saizheng Zhang, Emily Dinan, Jack Urbanek, Arthur           A    Web
+  Szlam, Douwe Kiela, and Jason Weston. 2018a. Per-
+  sonalizing dialogue agents: I have a dog, do you have     Prior works also investigate adapting LLM-based
+  pets too? In Proceedings of the 56th Annual Meeting
+                                                            language agents to solve tasks in web environ-
+  of the Association for Computational Linguistics (Vol-
+  ume 1: Long Papers), pages 2204–2213, Melbourne,          ments. However, they typically achieve this via
+  Australia. Association for Computational Linguistics.     task-independent instructions rather than specific
+  2, 20                                                     role-playing. Here we provide relevant research for
+Saizheng Zhang, Emily Dinan, Jack Urbanek, Arthur           leveraging LLMs in web environment.
+  Szlam, Douwe Kiela, and Jason Weston. 2018b. Per-            In this environment, LLMs operate web navi-
+  sonalizing dialogue agents: I have a dog, do you have     gation autonomously, performing actions such as
+  pets too? 19                                              clicking items, capturing contents, and searching
+Jinman Zhao, Zifan Qian, Linbo Cao, Yining Wang,            from external knowledge on the web, without a
+   and Yitian Ding. 2024. Bias and toxicity in role-play    specific persona assigned. Certainly, web tasks in-
+   reasoning. arXiv preprint arXiv:2409.13979. 8            volve two key components: HTML understanding
+Boyuan Zheng, Boyu Gou, Jihyung Kil, Huan Sun, and          and visual grounding, which are highly related to
+  Yu Su. 2024. Gpt-4v (ision) is a generalist web agent,    the effectiveness of web agents (Zheng et al., 2024;
+  if grounded. arXiv preprint arXiv:2401.01614. 17          Koh et al., 2024). Meanwhile, a stream of works,
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan
+                                                            compiled in Table 1, proposes several benchmarks
+  Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin,              to assess web agents in diverse aspects.
+  Zhuohan Li, Dacheng Li, Eric. P Xing, Hao Zhang,
+  Joseph E. Gonzalez, and Ion Stoica. 2023. Judging         HTML Understanding. Kim et al. (2024a)
+  llm-as-a-judge with mt-bench and chatbot arena. 4         showcase that the ability of HTML understand-
+                                                            ing is inherent in LLMs with the Recursive Criti-
+Aakas Zhiyuli, Yanfang Chen, Xuan Zhang, and Xun
+  Liang. 2023. Bookgpt: A general framework for             cism and Improvement (RCI) prompting method.
+  book recommendation empowered by large language           However, due to the special formats and long con-
+  model. 2                                                  text elements of HTML which are hard for LLMs
+                                                            to process and respond accurately, most research
+Peixiang Zhong, Chen Zhang, Hao Wang, Yong Liu, and
+  Chunyan Miao. 2020. Towards persona-based empa-           enhances this capability through fine-tuning meth-
+  thetic conversational models. In Proceedings of the       ods (Gur et al., 2022, 2023; Deng et al., 2024).
+  2020 Conference on Empirical Methods in Natural
+  Language Processing (EMNLP), pages 6556–6566,             Visual Grounding. Another line of research fo-
+  Online. Association for Computational Linguistics.        cuses on the visual grounding aspect of HTML
+  7                                                         understanding, which directly operates on ren-
+Wanjun Zhong, Lianghong Guo, Qiqi Gao, He Ye, and           dered webpages instead of the HTML source
+ Yanlin Wang. 2024. Memorybank: Enhancing large             code. Some literature proposes web agent frame-
+  language models with long-term memory. Proceed-           works, such as CogAgent (Hong et al., 2023b) and
+  ings of the AAAI Conference on Artificial Intelligence,   SeeClick (Cheng et al., 2024), leveraging Large
+  38(17):19724–19731. 8
+                                                            Multi-modal Models (LMMs) (Achiam et al., 2023;
+Shuyan Zhou, Frank F Xu, Hao Zhu, Xuhui Zhou,               Team et al., 2023). With additional information
+  Robert Lo, Abishek Sridhar, Xianyi Cheng, Yonatan         from webpage screenshots, LMMs usually outper-
+  Bisk, Daniel Fried, Uri Alon, et al. 2023. Webarena:
+  A realistic web environment for building autonomous
+                                                            form text-based LLMs (Zheng et al., 2024).
+  agents. arXiv preprint arXiv:2307.13854. 18
+
+Yujia Zhou, Zhicheng Dou, Bingzheng Wei, and Ruob-
+  ing Xievand Ji-Rong Wen. 2021. Group based per-
+  sonalized search by integrating search behaviour and
+  friend network. 6
+                                                                          Realistic     Dynamic      Visual
+         Benchmark                             #Instances     #Domains     Env.        Interaction   Needed    Assessment
+         WebShop (Yao et al., 2022a)            12,087           1             ✗           ✓           ✗        End-to-end
+         Mind2Web (Deng et al., 2024)            2,350            5            ✓           ✗           ✗        End-to-end
+         WebArena (Zhou et al., 2023)             812             4            ✓           ✓           ✗        End-to-end
+         VisualWebArena (Koh et al., 2024)        910             3            ✓           ✓           ✓        End-to-end
+         VisualWebBench (Liu et al., 2024)       1,500           12            ✓           ✗           ✓       Fine-grained
+
+Table 1: Comparison between recent benchmarks in the web environment. Realistic Env. denotes whether the
+benchmark’s environments are based on actual web pages or realistic web navigation simulations. Dynamic
+Interaction indicates whether the benchmark supports dynamic interactions rather than remaining in static states.
+Visual Needed denotes whether the benchmark involves visually grounded tasks. Assessment refers to the types of
+assessment. An end-to-end benchmark includes tasks with simple instructions, requiring step-by-step solutions to
+reach the final answers. A fine-grained benchmark contains tasks with a detailed assessment of essential skills in the
+web environment such as Optical Character Recognition (OCR), and semantic understanding.
+
+ Paper                      Scene               Dataset               Method       Task
+                        Hotel, Movies         TripAdvisor,       Embeddings, Aspect extraction, Rating Prediction
+ Li et al. (2023b)         & TV,             Amazon, Yelp         Prompting,
+                         Restaurant                              Fine-tuning
+ P5 (Geng et al., Sports, Beauty, Amazon (Ni et al.,              Pretraining,     Rating Prediction, Sequential Recommendation,
+ 2022)              Toys, Yelp      2019), Yelp                   Prompting        Explanation Generation, Review Generation,
+                                                                                   and Direct Recommendation
+ PETER Li et al. Hotel, Movies                TripAdvisor,       Transformer       Rating prediction and Explanation Generation
+ (2021)             & TV,                    Amazon, Yelp
+                  Restaurant
+ PEPLER (Li et al., Hotel, Movies,    TripAdvisor5                Prompting,       Explanation Generation
+ 2023a)                TV and       (Hotel), Amazon               Fine-tuning
+                     Restaurant    (movies& TV) and
+                                    Yelp7 (restaurant)
+ PALR (Yang et al., Movies, Beauty       MovieLens-1M            Fine-tuning,      User Profile Generation and Direct Recommen-
+ 2023b)                                   (Harper and            User Profile      dation
+                                         Konstan, 2015),         Generation,
+                                        Amazon Beauty (Ni         Retrieval
+                                          et al., 2019)
+                           Sports,              Amazon            Fine-tuning      Rating Prediction, Sequential Recommendation,
+ Chu et al. (2023)        Outdoors,                                                Direct Recommendation, Explanation Genera-
+                        Beauty, Toys                                               tion and Review Summarization
+                         and Games
+                           Beauty               Amazon            Prompting        Rating Prediction, Sequential Recommendation,
+ Liu et al. (2023a)                                                                Direct Recommendation, Explanation Genera-
+                                                                                   tion and Review Summarization
+                        Video Games             Amazon            Instruction      Sequential Recommendation and Direct Recom-
+ Zhang et al. (2023)                                                tuning         mendation
+                           Movies       Amazon (Ni et al.,        Prompting        Sequential Recommendation
+ Hou et al. (2024)                            2019),
+                                         MovieLens-1M
+                                        Harper and Konstan
+                                              (2015)
+                           Movies            MovieLens-1M         Prompting        Sequential Recommendation and Direct Recom-
+ Wang and        Lim                          (Harper and                          mendation
+ (2023)                                      Konstan, 2015)
+                            News         MIND (Wu et al.,         Fine-tuning      Direct Recommendation
+ Chen et al. (2022a)                      2020), Reddit           with weak
+                                                                     labels
+
+Table 2: An overview of existing research in recommendation. Following the classification of Liu et al. (2023a),
+we classify recommendation systems into five types: rating prediction, sequential recommendation, explanation
+Generation, and review generation, and direct recommendation.
+  Dataset                                        Scene           Task         #Instances        #Users          #Items
+  Amazon Review (Ni et al., 2019)              Products         Ratings,          233.1M        43.53M      15.17M
+                                                                Reviews
+  MovieLens (Harper and Konstan, 2015)          Movies          Ratings           100,000        1,000          1,700
+  Yelp (Yelp, 2013)                           Businesses       Ratings &          6,990,280    1,987,897    150,346
+                                                               Reviews
+  TripAdvisor (Li et al., 2023a)                Hotels,        Ratings &          320,023        9,765          6,280
+                                              Restaurants      Reviews
+  MIND (Wu et al., 2020)                         News        Sequence rec-          15M           1M            160k
+                                                             ommendation
+
+Table 3: A list of commonly used datasets in personalized LLMs for recommendation and search task. For the fifth
+column, the instances include reviews and ratings.
+
+
+
+
+        Category                   Dataset                                        #Dialogues #Utterance #Domains
+                                   MultiWOZ 1.0 (Budzianowski et al., 2018)         10,438    75,894       7
+                                   MultiWOZ 2.0 (Ramadan et al., 2018)              8,438     63,841       7
+                                   MultiWOZ 2.1 (Eric et al., 2020)                  7,032    57,022       7
+                                   MultiWOZ 2.2 (Zang et al., 2020)                 10,438     71,572       7
+        ToD
+                                   SGD (Rastogi et al., 2020)                       22,825    463,284      20
+                                   STAR (Mosig et al., 2020)                         6,652    127,833      13
+                                   AirDialogue (Wei et al., 2018)                    4,000    52,000       1
+                                   UniDA (He et al., 2022)                          70,726    975,780      13
+                                   PersonaChat (Zhang et al., 2018b)                11,907    164,356       1
+                                   ConvAI2 (Dinan et al., 2019)                     13,500    182,150       1
+                                   Baidu PersonaChat (PapersWithCode, 2020)         20,000    280,000       1
+        User Persona
+                                   JPersonaChat (Sugiyama et al., 2021)             10,000    140,000       1
+                                   JEmpatheticDialogues (Sugiyama et al., 2021)     25,000    350,000      1
+                                   DailyDialog (Li et al., 2017)                    13,118    102,979      10
+
+Table 4: A list of commonly used datasets for ToD modeling and user persona modeling. Among them, different
+versions of MultiWOZ (Budzianowski et al., 2018; Ramadan et al., 2018; Eric et al., 2020; Zang et al., 2020)
+and PersonaChat (Zhang et al., 2018b) are the most commonly used. Updated versions of MultiWOZ improve in
+several aspects: data quality, dialogue complexity, schema and ontology updates, and dataset sizes. PersonaChat
+contains various persona profiles, consisting of background, preferences, and personality traits. These profiles
+enable the modeling of coherent and contextual multi-turn diverse dialogue scenarios. For applications in user
+persona modeling, Tu et al. (2023) match individuals with persona-compatible virtual supporters and introduces the
+MBTI-S2Conv dataset, containing conversations between characters with distinct profiles. Lotfi et al. (2024) and
+Han et al. (2024) both propose synthetic datasets related to the Big Five personality.
+Domain            Dialogue, Slots, and State
+                  [USER:] I need a place to dine in the center that’s expensive.
+                  Slots: restaurant-area: centre, restaurant-pricerange: expensive
+Restaurant        State: active_intent: find_restaurant
+                  [SYSTEM:] I have several options for you; do you prefer African, Asian, or British food?
+                  State: active_intent: find_restaurant, requested_slots: restaurant-food
+                  [USER:] Any sort of food would be fine, as long as it is a bit expensive. Could I get the phone number for
+                  your recommendation?
+                  Slots: restaurant-area: centre, restaurant-pricerange: expensive, restaurant-food
+                  State: active_intent: find_restaurant, requested_slots: restaurant-phone
+                  [SYSTEM:] There is an African place named Bedouin in the center. How does that sound?
+                  Slots: restaurant-name: Bedouin
+                  [USER:] Sounds good, could I get that phone number? Also, could you recommend me an expensive hotel?
+                  Slots: restaurant-area: centre, restaurant-name: Bedouin, restaurant-pricerange: expensive, restaurant-phone
+                  State: active_intent: find_restaurant, requested_slots: restaurant-phone
+                  [SYSTEM:] Bedouin’s phone is 01223367660. As far as hotels go, I recommend the University Arms Hotel
+                  in the center of town.
+                  Slots: hotel-name: University Arms Hotel
+Hotel             State: active_intent: find_hotel
+                  [USER:] Yes. Can you book it for me?
+                  State: active_intent: find_hotel, requested_slots: hotel-booking
+                  [SYSTEM:] Sure, when would you like that reservation?
+                  [USER:] I want to book it for 2 people and 2 nights starting from Saturday.
+                  Slots: hotel-bookday: Saturday, hotel-bookpeople: 2, hotel-bookstay: 2
+                  State: active_intent: book_hotel, slot_values: hotel-bookday: Saturday, hotel-bookpeople: 2, hotel-
+                  bookstay: 2
+                  [SYSTEM:] Your booking was successful. Your reference number is FRGZWQL2. May I help you further?
+                  Slots: hotel-bookday: Saturday, hotel-bookpeople: 2, hotel-bookstay: 2, reference number: FRGZWQL2
+                  [USER:] That is all I need to know. Thanks, goodbye.
+                  [SYSTEM:] Thank you so much for Cambridge TownInfo center. Have a great day!
+
+             Table 5: An example of ToD modeling from the MultiWOZ dataset (Zang et al., 2020).
+
+Persona           Chat
+                  [PERSON 1:] Hello how are u tonight
+                  [PERSON 2:] Hi. I am okay. tired, but okay. how are you ?
+                  [PERSON 1:] I am doing good should be sleeping i have school but can’t sleep
+                  [PERSON 2:] I did not finish school, I enlisted in the army instead .
+                  [PERSON 1:] Wow I am only 14 so I can’t do that just yet but I hope too
+I fly airplanes.
+I enjoy building [PERSON 2:] nice. stay in school and work hard .
+computers.        [PERSON 1:] I try i like video games and race cars
+My favorite band [PERSON 2:] I like video games too, fallout is my favorite.
+is tool.          [PERSON 1:] I am a call of duty girl i can’t wait for the new one
+I am in the army.
+                  [PERSON 2:] My younger brother is a cod player too. he is pretty good .
+I dropped out of
+college.          [PERSON 1:] I have three best friends but lots of other friends that play it
+                  [PERSON 2:] I have a best friend, she is a pilot like me.
+                  [PERSON 1:] What kind of plane do u fly
+                  [PERSON 2:] A bomber, it is awesome. do you want to take lessons
+                  [PERSON 1:] I am kinda afraid of heights so not sure flying is for me
+                  [PERSON 2:] You should at least try to go up in a plane, it is a blast.
+
+     Table 6: An example of user persona modeling (§3.5) from Persona-Chat dataset (Zhang et al., 2018a).
+
