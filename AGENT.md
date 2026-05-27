@@ -1,6 +1,6 @@
 # 研究メモ: 逆さま不動産と借り手AIエージェント
 
-このワークスペースでは、逆さま不動産とRPLA/Persona系研究を接続した研究方向を扱う。
+このワークスペースでは、逆さま不動産とRPLA/Persona系研究を接続した研究方向を扱う。研究テーマはまだ確定ではなく、先行研究調査を踏まえた方向性の検討段階として扱う。
 
 ## 逆さま不動産の前提
 
@@ -29,6 +29,8 @@
 - 借り手について利用できる情報量は多くないことが課題。
 - 記事にない情報をLLMが勝手に補完しないようにする必要がある。
 - 記事情報を、目的・希望・制約・質問項目などに構造化して使う方向が有望。
+- 「対話に必要な情報を構造化する」という考え方自体はTask-Oriented Dialogueのschema/slot/goalに近く、完全に新しいものではない。
+- 差分は、借り手の自由記述記事から、大家との代理対話に必要な目的・希望・制約・質問項目を抽出し、借り手役のAIエージェントに使う点にある。
 
 ## 評価軸の候補
 
@@ -41,11 +43,13 @@
 
 - RPLA研究は、人物像や役割に基づく対話AIを考える上で参考になる。
 - ただし、この研究は有名キャラクターや架空人物の再現ではなく、限られた借り手記事に基づく目的志向対話エージェントとして整理する。
-- `Two Tales of Persona in LLMs`: Role-Playing と Personalization の整理に使う。
+- `Two Tales of Persona in LLMs`: Role-Playing と Personalization の整理に使う。今回の対話相手は大家さんなので、大家さんに合わせるPersonalizationではなく、借り手情報をAI側のpersonaとして与えるRole-Playingに近い。
 - `From Persona to Personalization`: 借り手記事を Individualized Persona に近いものとして説明するのに使う。
 - `TimeChara`: 知識境界を守る必要性、つまり記事にないことを言わない問題の説明に使う。
 - `PingPong`: 単発応答ではなく、多ターン対話で評価する必要性の説明に使う。
 - `PersonaEval`: LLM-as-a-judge だけに頼る評価の危うさを説明するのに使う。
+- 関連研究として、Task-Oriented Dialogue、persona-grounded dialogue、preference following、knowledge-grounded dialogueのfaithfulness評価も調べている。
+- 近い論文は `PicPersona-TOD`, `SG-USM`, `PrefEval`, `Persona-Aware Alignment Framework`, `Grounded Minimal Edits`, `NLIによるPersona Consistency`, `Q2`, `Increasing Faithfulness`。
 
 ## 発表・スライド方針
 
@@ -53,7 +57,7 @@
 - 発表の目的は、先行研究について調べ、それを踏まえて自分が何をしたいかを話すこと。
 - 研究テーマはまだ確定ではなく、「今はこう考えている」という温度感で話す。
 - 逆さま不動産の説明は1枚程度。
-- 先行研究紹介は3枠程度に絞る。
+- 先行研究紹介は3枠程度に絞る。現在のスライドでは、1) `Two Tales`, 2) `From Persona to Personalization`, 3) `TimeChara` / `PersonaEval` / `PingPong` を評価の難しさとしてまとめる構成。
 - 日本の研究室発表らしい、白背景・青アクセント・シンプルなMarpスライドがよい。
 - あたかも研究が確定したようなタイトルは避ける。
 - 現在の仮タイトルは「逆さま不動産における借り手AIエージェントの検討」。

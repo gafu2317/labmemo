@@ -1,0 +1,954 @@
+        Increasing Faithfulness in Knowledge-Grounded Dialogue with
+                            Controllable Features
+
+        Hannah Rashkin              David Reitter Gaurav Singh Tomar                                          Dipanjan Das
+                                     Google Research, New York, NY
+                         {hrashkin, reitter, gtomar, dipanjand}@google.com
+
+
+
+
+                      Abstract                                                              Grounding Document
+                                                                      A "no-kill" shelter is an animal shelter that does not kill healthy or
+                                                                      treatable animals even when the shelter is full, reserving
+    Knowledge-grounded dialogue systems are in-                       euthanasia for terminally ill animals ...
+    tended to convey information that is based on              User
+    evidence provided in a given source text. We                           I visit animal shelters fairly often
+    discuss the challenges of training a generative                           Personal Experience
+    neural dialogue model for such systems that                                There's a really nice no-kill shelter by my
+                                                                               house that I volunteer at on wednesdays!
+
+
+
+
+                                                                                                                                               Different response styles
+    is controlled to stay faithful to the evidence.
+    Existing datasets contain a mix of conversa-
+                                                                          I see. Is a no kill shelter different from
+    tional responses that are faithful to selected ev-                    regular animal shelter?
+    idence as well as more subjective or chit-chat                           Information Supported by the Grounding Document
+    style responses. We propose different evalu-                               Yes, a "no-kill" shelter is an animal shelter
+    ation measures to disentangle these different                              that does not kill healthy or treatable animals
+                                                                               even when the shelter is full.
+    styles of responses by quantifying the informa-
+    tiveness and objectivity. At training time, ad-
+    ditional inputs based on these evaluation mea-             Figure 1: Excerpt from Wizard of Wikipedia (Dinan
+    sures are given to the dialogue model. At                  et al., 2019) conversation. This grounded dialogue in-
+    generation time, these additional inputs act as            cludes responses containing subjective or personal ex-
+    stylistic controls that encourage the model to             periences as well as responses sharing information sup-
+    generate responses that are faithful to the pro-           ported by external documents.
+    vided evidence. We also investigate the us-
+    age of additional controls at decoding time us-
+    ing resampling techniques. In addition to au-              the process involved in, say, adding a new home
+    tomatic metrics, we perform a human evalu-
+                                                               automation device. We assume that multi-turn con-
+    ation study where raters judge the output of
+    these controlled generation models to be gener-            versational interaction can help a human user learn
+    ally more objective and faithful to the evidence           to retain the new material.
+    compared to baseline dialogue systems.                        Here, we investigate ways to stay faithful to
+                                                               information from a text document in a conversa-
+1   Introduction                                               tion. We approach this problem via the task of
+Dialogue systems that strive to be informative                 knowledge-grounded dialogue, where a system pro-
+teachers are difficult to build, despite recent                duces a dialogue response using a piece of evidence
+progress in training end-to-end systems that mimic             from a grounding document and a previous conver-
+human language at a linguistic level. These systems            sation history as input (as in Figure 1). Whereas
+benefit from vast training data and great representa-          P ERSONAC HAT-style tasks (Zhang et al., 2018)
+tional capacity; yet there are no controls (or training        may focus on dialogue systems that are meant to be
+objectives) available that ensure they are truthful.           engaging, this task focuses instead on systems that
+A more limited goal for a system is to be faithful to          are meant to be informative, meaning that they only
+one or more source documents that we implicitly                share verifiable information and exclude subjective
+trust. Such a system might help educate users about            or invented personal information.
+a particular topic through conversational interac-               There are existing knowledge-grounded dia-
+tion, or it might augment a task-oriented dialogue             logue datasets (e.g. (Ghazvininejad et al., 2018;
+system by providing additional information about               Dinan et al., 2019; Qin et al., 2019)) that could
+
+                                                         704
+                Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics
+              and the 11th International Joint Conference on Natural Language Processing, pages 704–718
+                          August 1–6, 2021. ©2021 Association for Computational Linguistics
+be appropriate training resources for such an infor-     that the proposed evaluation measures correlate
+mative dialogue agent. However, we observe that          with the human judgements, indicating that these
+these datasets often contain utterances with vary-       are appropriate measures for gauging specific as-
+ing conversation styles and intents, including some      pects of groundedness. Lastly, we conclude the
+utterances that are more informative and some that       paper with some discussion of examples and possi-
+are chit-chat utterances or subjective commentary.       ble trade-offs.
+For instance, in Figure 1, we show an example con-
+versation excerpt from the Wizard of Wikipedia             2     Task
+(Dinan et al., 2019) training set. While some utter-     We introduce a sub-task of knowledge-grounded
+ances are supported by the grounding documents           dialogue where a dialogue agent is intended to
+(the second response), others include personal expe-     be informative and must not share hallucinations,
+riences and observations (as in the first response).     which we define here as any information that is
+Because of this mix of conversations styles, we          neither inferrable from nor directly stated by ex-
+cannot ensure that models naively trained on this        ternal documents. In this task, a system is given
+data will learn to generate only faithful, informative   evidence from a document (or documents) and a
+utterances.                                              conversation history and must produce a response
+   In order to avoid this issue, one could collect       that is both faithful to the evidence and also natu-
+new datasets where the responses are more explic-        ral within the context of the previous conversation
+itly constrained by the evidence, but this could         utterances. Because this task focuses on being in-
+be quite expensive and may be challenging to im-         formative to a user, the agent is not allowed to
+plement. Instead, in this paper, we propose an           share unsupported or subjective information (this
+alternate approach: we adapt techniques from con-        includes invented personal traits - e.g. “I love dogs,
+trollable text generation in order to train dialogue     too!”). Additionally, it is not sufficient to be purely
+models that learn to disentangle these conversation      extractive as information from the evidence may
+styles within the data and can be controlled at gen-     need to be re-phrased to be a conversationally ap-
+eration time to produce more grounded responses.         propriate response (e.g. if a user asked a question
+   We propose using multiple evaluation measures         that is inferrable from the evidence but not directly
+that are relevant to the faithfulness of a response      stated).
+and use these to control the output of two com-             To simplify the task for this paper, we assume
+monly used seq2seq models (GPT-2 (Radford et al.,        that an appropriate evidence span, e, has already
+2019) and T5 (Raffel et al., 2020)). We investigate      been labelled. We therefore study how to gener-
+two methods for adding controllability. First, we        ate an appropriate response y given the previous
+integrate control code features based on the evalu-      conversation history x and a chosen evidence e as
+ation measures as special tokens prepended to the        input.
+seq2seq input, drawing inspiration from domain-
+                                                           2.1    Evaluation measures
+based control codes methods (Keskar et al., 2019).
+These special tokens are created using information       Our goal is to design a dialogue model that is more
+about the gold response at training time, but are        faithful and objective in how it relays evidence. We
+set to maximize the groundedness of the responses        propose using a series of evaluation measures to
+at generation time. Second, we implement a form          estimate whether a response is (1) written in an
+of resampling that directly restricts the output to      objective voice, (2) not sharing extra information
+satisfy the proposed evaluation measures.                that is not in the document and (3) entailed by the
+                                                         grounding evidence. In the modeling section (Sec.
+   In order to inspect the faithfulness and style of
+                                                         4), we describe how we incorporate these measures
+the responses, we use automatic evaluations (in-
+                                                         into a controllable generation framework.
+cluding BLEU and the evaluation measures de-
+scribed) and human evaluations that are designed         Objective Voice One form of hallucination is
+to focus on the degree to which the response is          when a dialogue agent might share personal sto-
+faithfully representing information from the evi-        ries or opinions. It is common for dialogue agents
+dence. Our results show that using these control-        to learn this behavior as many dialogue datasets
+lable generation techniques can improve the per-         contain instances of personal chit-chat even if the
+ceived faithfulness and objectivity. We also show        task is aimed at grounded language. We estimate
+
+                                                     705
+objective voice as a binary variable based on the                           Wizard of Wikipedia (Dinan et al., 2019)
+presence of first person singular pronouns detected                                                   # Wizard responses
+using a word list.                                                              Train data                  73571
+                                                                            Dev (seen topics)                3905
+Lexical Precision We also want to ensure that                              Dev (unseen topics)               3898
+                                                                            Test (seen topics)               3842
+the response is not adding extra information from                          Test (unseen topics)              3902
+what’s in the selected evidence. To estimate this,                                      Training responses
+we measure the precision of the unigrams in the                            % with first person               44%
+response with respect to the evidence. A high value                     Avg. lexical prec. wrt evid.         0.43
+                                                                          % predicted entailed               23%
+indicates that most of the words in the response are
+contained somewhere in the evidence. We use this                    Table 1: Data statistics from the Wizard of Wikipedia
+measure because it is relevant to grounding preci-                  dataset.
+sion scores in previous work (Tian et al., 2020) and
+because it can reasonably gauge how extractive the
+response is, but one drawback of this measure is                     We note that even though Wizard of Wikipedia
+that it is based on lexical features which may not                is a knowledge-grounded dataset, there are many
+reflect semantic differences in the information be-               utterances that also include information external to
+ing shared (e.g. dropping the word ‘not’ may yield                the evidence (as noted in Figure 1). Many conver-
+high lexical precision but a very different semantic              sation turns relay evidence while also embellishing
+meaning from the original evidence). We leave                     with chit-chat, opinion sharing, or interlocutors’
+investigation of more semantic-oriented measures                  own intuitions and world knowledge. This is be-
+of the precision of information to future work.                   cause this dataset was collected by asking human
+                                                                  crowdworkers to converse with each other, and it
+Entailment Lastly, we want to encourage the                       is natural for humans to embellish and personalize
+model to produce a response that is semantically                  their conversations even when discussing a doc-
+entailed by the source document. We use a state-of-               ument. Yet, for our goal of training informative
+the-art natural language interference (NLI) model                 dialogue agents, we need to train models that only
+(Roberta trained on MNLI (Liu et al., 2019)) to                   relay information that is found in the evidence.
+estimate if a response is entailed by the evidence.1                 In order to avoid collecting new data, which
+                                                                  is costly and challenging, we investigate how to
+3       Data                                                      train models with this data while discouraging them
+                                                                  from hallucinating extra information that cannot
+Wizard of Wikipedia (Dinan et al., 2019) is a re-
+                                                                  be confirmed in the evidence. One way to deal
+cent, large-scale dataset of multi-turn knowledge-
+                                                                  with this challenge might be to only train with the
+grounded dialogues between a “apprentice” and
+                                                                  portions of the data where the response is highly
+a “wizard”, who has access to information from
+                                                                  grounded by the evidence. However, in our calcu-
+Wikipedia documents. The wizard labelled evi-
+                                                                  lations (bottom of Table 1), we find that as much
+dence spans within documents for each utterance
+                                                                  as 44% of training set responses are in first person
+they made. Additionally, the development and test
+                                                                  and only 23% of responses are predicted to be en-
+sets are split into two portions depending on if the
+                                                                  tailed by the evidence, which indicates that a large
+conversation is about a topic that was seen or un-
+                                                                  portion of training data would have to be excluded.
+seen in the training data. We use the gold-labelled
+                                                                  Instead, our paper proposes a modeling technique
+evidence as input to the model in order to focus
+                                                                  in which we incorporate different input features de-
+on improving the quality of generating responses
+                                                                  noting different conversational styles. We can then
+given such evidence and the previous dialogue his-
+                                                                  train the model in a way that learns to use these
+tory. We also focus on only modeling the utter-
+                                                                  features to disentangle the differences between ut-
+ances by the “wizard” in the cases where they are
+                                                                  terances that are more faithful to the evidence vs.
+responding to the “apprentice”. We include data
+                                                                  other types of utterances.
+statistics in Table 1 and an example conversation
+excerpt in Figure 1.
+                                                                    4   Modeling
+    1
+     We aggregate neutral and contradiction as “non-entailing”
+because we care mainly about detecting entailment rather than     We investigate how to add controllable features to
+the distinctions between the other two standard NLI categories.   a large neural dialogue model in order to constrain
+
+                                                              706
+                                                                                Decoding Time: Resampling (§4.2.2)
+
+                                                                             output         Satisfies       resample
+                           Training Time:                                                 constraints?
+                                                                                        Y             N
+            Minimize cross-entropy of gold response
+                                                                                        Output response
+
+
+
+                                                       Fine-tuned LM
+
+
+         <high-prec>
+
+                       <no-1st-person>                         e1 e2 … ep                   <SPEAKER1> x1 … xm
+
+                                            <entail>
+
+        CONTROL CODE SEQUENCE(§4.2.1)                  EVIDENCE SEQUENCE                CONV HISTORY SEQUENCE
+
+
+Figure 2: Modeling Figure: In our modeling framework, a large pre-trained language model is used to encode the
+evidence and conversation history and produce a response. We incorporate additional tokens (i.e. control codes) to
+train the model to recognize differences between types of utterance that are more or less grounded to the evidence.
+At decoding time, we also investigate the significance of using resampling methods.
+
+
+the amount of hallucinated text while also taking                   though training data for GPT-2 and T5 have been
+advantage of the underlying fluency of a large end-                 carefully selected, these large datasets may con-
+to-end neural model.                                                tain sources with unfair distributions and factual
+                                                                    inaccuracies, and thus the models and the resulting
+4.1   Generation Model
+                                                                    generated synthetic data may have inherited these
+As our underlying dialogue model, we use neu-                       biases. Additionally, the output generated by these
+ral seq2seq architectures – T5 (Raffel et al., 2020)                models may only succeed in being superficially
+and GPT-2 (Radford et al., 2019), which are ar-                     similar to human-written text or dialogue turns.
+chitectures used in state-of-the-art dialogue sys-
+tems (e.g. DialoGPT (Zhang et al., 2020)). We
+fine-tune these models on our grounded dialogue                     4.2     Adding controllable generation
+dataset. The input to the model is a sequence of ev-
+idence tokens e1 ...ep and a dialogue history which              We describe two methods of adding controllability
+we treat as a sequence of tokens x1 ...xm where                  to the dialogue models to enhance the grounded-
+the utterances are delimited by the speaker ID (ei-              ness according to the evaluation measures from
+ther <speaker1> or <speaker2>). For the                          Sec. 2.1. First, we incorporate control features into
+GPT-2 model, we also include special token-type                  the input of the model. Second, we describe addi-
+embeddings that are added to the byte-pair embed-                tional decoding-time techniques using resampling.
+ding tokens and position embeddings. The token-
+type embeddings denote the segments of the input                    4.2.1    Control Code Features
+that belong to the evidence and the two different
+speakers. We train the model to produce the next                 We add control features as a way of encouraging
+conversation utterance y1 ...yn by minimizing the                the underlying language model to disentangle dif-
+cross-entropy:                                                   ferent conversations styles at training time. We
+                       1X
+                           n                                     implement this using the control code approach pre-
+        LCE = −           log p(yi |y<i , x, e)         (1)      viously introduced in CTRL (Keskar et al., 2019).
+                       n
+                          i=1                                    First, we use the measures introduced in Section 2.1
+Caveats of generative language models As                         to create control feature tokens based on how much
+noted by the documentation with the GPT-2 release,               of the content of the response is grounded in the
+we lack a complete understanding of language mod-                gold labelled evidence. The control feature tokens
+els’ robustness and worst case behaviors. Even                   c1 ...cn are prepended to the other tokens. The train-
+
+                                                              707
+ing objective therefore becomes:                             5.1   Set-up
+                     n                                   We use the HuggingFace library (Wolf et al., 2020)
+                 1X
+      LCE = −       log p(yi |y<i , x, e, c)     (2)     versions of GPT-2 and T5. We select training hy-
+                 n
+                    i=1                                  perparameters based on cross-entropy of the de-
+  At training time, we set control feature tokens        velopment set. We use a learning rate of 8E − 5
+based on measures of entailment, lexical precision,      and maximum gradient norm of 1, 3.5 for GPT-
+and objective voice of the gold response. At decod-      2, T5 respectively with ADAM to minimize the
+ing time, control codes are set to the desired valued    training loss (with 200 warm-up steps). If the total
+for these qualities (high entailment, high lexical       sequence length is greater than 1024, we truncate
+precision, objective voice).                             the previous conversation turns until the sequence
+                                                         is short enough. We train for three epochs for all
+Objective Voice In order to encourage the model
+                                                         models. For decoding, we use nucleus sampling
+to be only relaying objective information from the
+                                                         (Holtzman et al., 2020) with p = 0.6 and a min-
+evidence, we include a control code for whether or
+                                                         imum generation length of five tokens (based on
+not the utterance contains first-person pronouns
+                                                         better BLEU performance with the development
+(<first-person>,<no-first-person>).
+                                                         set). In our experiments with resampling, we arbi-
+At decoding time, we always use the
+                                                         trarily set d = 10.
+<no-first-person> control token.
+Lexical Precision We measure the lexical pre-                5.2   Metrics
+cision of the response with respect to the evi-          We use both automatic metrics (Sec. 5.3 and 5.4)
+dence, splitting the training utterances into three      and human ratings (Sec. 5.5) to better understand
+terciles (high, medium, and low). We map                 performance of our model and the effect of control-
+the terciles to control codes to denote the pre-         lable features.
+cision level (<high-prec>,<med-prec>, and                   First, we use BLEU to compare the model out-
+<low-prec>). At decoding time, we always use             put to a gold reference. While BLEU gives a gen-
+<high-prec>.                                             eral sense of the fluency, there are drawbacks to
+Entailment We        add      control codes              word-overlap metrics for evaluating open-ended
+for the output of the NLI classifier                     generations like dialogue (Liu et al., 2016). Ad-
+(<entailed>,<non-entailed>).             At              ditionally, comparing to a gold reference answer
+decoding time, we always use <entailed>.                 fails to measure the underlying question we hope
+                                                         to interpret: whether the response is more objective
+4.2.2 Controlled resampling                              and grounded to the evidence. Therefore, we also
+Whereas the control code method implicitly teaches       evaluate the output using the proposed evaluation
+the model to use different styles, some applications     measures from Section 2.1. In addition to lexical
+may require more direct control over the model out-      precision, we also report the lexical recall of words
+put. Additionally, there may be situations where a       from the evidence.
+dialogue system cannot be re-trained. We therefore          But, the controllable models are controlled us-
+also investigate a method of implementing more           ing the same evaluation measures, so we expect
+direct control at decoding time. We experiment           that these models may have an advantage in these
+with a resampling method that continues to sam-          metrics. Thus, we rely more on human evaluations
+ple responses until one is found that satisfies the      (Section 5.5). We ask humans to evaluate the qual-
+evaluation measures (high lexical precision, objec-      ity along multiple aspects including whether the
+tive voice, and predicted entailment). To save on        response is fluent, relevant, supported/faithful, and
+computational efficiency, we use a cut-off to avoid      objective.
+resampling more than d times.
+                                                             5.3   Ablation of Control Code Features
+5   Experiments
+                                                         First we conduct an ablation study to investigate
+We perform experiments using automatic metrics           the effects of each individual control code feature
+and human judgments to evaluate the effectiveness        being used as model input. Table 2 shows the re-
+of the proposed controllable dialogue system and         sults on the seen topics portion of the Wizard of
+its various components.                                  Wikipedia development set. Unsurprisingly, each
+
+                                                       708
+                                           BLEU                   Objectiv.       Overlap w.r.t. Evid      Entail
+            Control Codes         B1      B2   B3         B4       % N1P          Prec      Rec           % Entail
+      GPT-2 + No Control         27.6     12.5     8.1    6.0       49.9          56.4      48.4           34.9
+             + Objective         26.4     12.8     8.6    6.4       98.1          62.3      50.5           50.1
+         + High Lex Prec         29.9     15.1    10.4    7.9       63.4          70.6      60.3           51.9
+            + Entailment         27.3     13.9     9.4    7.1       80.5          72.6      56.2           69.7
+                    + All        27.9     14.8    10.2    7.7       99.4          76.6      60.3           72.3
+          T5 + No Control        28.6     14.4     9.7    7.3       49.8          63.9      50.1           44.4
+              + Objective        27.4     14.8    10.3    7.9       99.4          70.7      53.4           65.1
+          + High Lex Prec        29.6     15.9    11.1    8.4       63.3          76.1      59.8           60.7
+             + Entailment        27.8     15.3    10.6    8.1       80.3          77.7      57.3           80.0
+                     + All       27.4     15.5    11.0    8.5       99.9          84.2      60.7           89.4
+
+Table 2: Ablation Study: The effects of using different types of control codes for generation on the Wizard of
+Wikipedia seen topic development set. In addition to BLEU, we measure objective voice by the percent of replies
+where there is no first person (N1P). We also measure the lexical precision and recall with respect to the words
+from the evidence. Lastly we compute the percentage of responses that are predicted to be entailed according to
+an MNLI classifier.
+
+                                                      Seen Topic                              Unseen Topic
+                                          BLEU     N1P      w/ Evid.       NLI      BLEU    N1P     w/ Evid.      NLI
+                                Model      B4       %     Prec Rec          %        B4      %    Prec     Rec     %
+       E2E model (Dinan et al., 2019)       1.5    48.0   47.9     30.4    29.3      0.3    37.6   33.2    21.7    9.5
+  dodecaDialogue (Shuster et al., 2020)    10.0    78.3   81.1     67.7    70.3      9.7    77.7   81.3    66.5   70.6
+                        GPT-2 (none)        6.2    50.9   56.1     49.4    34.2      5.7    52.1   56.4    48.3   34.2
+               GPT-2 (control codes)        7.8    99.3   76.6     61.5    73.8      7.6    99.2   77.0    60.3   74.0
+                  GPT-2 (resampling)        7.6    75.1   70.4     57.7    71.4      7.2    76.2   70.3    56.5   72.3
+                        GPT-2 (both)        8.9    99.9   83.1     66.3    93.9      8.4    99.8   83.2    64.7   94.4
+                            T5 (none)       7.6    51.1   64.0     51.9    45.1      7.4    51.4   65.2    51.9   44.9
+                   T5 (control codes)       8.6    99.7   84.3     62.1    89.0      8.5    99.4   85.0    61.5   89.8
+                     T5 (resampling)        8.2    77.5   73.3     55.5    74.7      8.1    78.5   74.4    55.5   76.3
+                             T5 (both)      8.4    99.8   85.0     62.1    94.0      8.7    99.8   86.1    62.2   94.4
+
+Table 3: Experimental results on the seen/unseen topic portions of the Wizard of Wikipedia test set. We report
+BLEU-4, the percentage of responses that don’t use first person language (N1P), precision and recall of words in
+the response with the evidence and the proportion of responses that are predicted to be entailed by the evidence .
+
+
+control feature generally helps in improving on the             (Shuster et al., 2020). These are transformer-based
+measure that was used in its training. However, we              architectures that use the evidence and conversation
+also find, more generally, that each type of control            history as inputs but do not explicitly control the
+code feature does improve over the base model on                model to be more faithful to the input. In general,
+all metrics. Results also show that using all con-              we find that models with pre-trained or multi-task
+trol code features together generally improves the              training set-ups (dodecaDialogue, GPT-2, and T5)
+performance across the automatic metrics.                       have relatively consistent performance across both
+                                                                the seen and unseen topic partitions of the test set,
+5.4   Automatic Metric Results on Test Set                      indicating that these models can generalize fairly
+We show results on both portions of the Wizard of               well to unseen topics.
+Wikipedia test set in Table 3. As baselines, we use                Results generally show improvements over the
+finetuned GPT-2 and T5 without any controllable                 baselines when using control codes. By addition-
+features or resampling. We also include results                 ally using resampling at decoding time, we see
+the end-to-end generative model (E2E) with gold                 further improvements, though resampling is not as
+knowledge that was introduced in the original Wiz-              effective on its own. One explanation why resam-
+ard of Wikipedia paper (Dinan et al., 2019) and the             pling is not as effective is that it may be unable
+model in the follow-up work on dodecaDialogue                   to find a satisfactory response within d resampling
+
+                                                          709
+                                               Model       Fluency          Relevance     Faithfulness   Objectivity
+             E2E model (Dinan et al., 2019)                5.00             4.61          2.48***        2.26***
+        dodecaDialogue (Shuster et al., 2020)              4.99             4.73          4.37*          3.92**
+                                  T5 (none)                5.00             4.84          3.66***        2.82***
+                         T5 (control codes)                5.00             4.66*         4.64           4.53
+                           T5 (resampling)                 4.99             4.77          4.14***        3.82***
+                                   T5 (both)               5.00             4.82          4.42*          4.30
+
+Table 4: Human Quality Ratings: * ,** ,*** indicates that this result is significantly different from the best result in
+that column (bolded) with p-value < 0.05, < 0.01, < 0.001 respectively.
+
+
+turns, particularly if the underlying model has not                        We subsample examples from the seen topics
+been already trained in a controllable set-up. Sup-                     test set, using 100 examples per model variant with
+porting this, we find that different choices of d has                   3 human raters per example. In order to give raters
+more of an impact on performance with the “just                         more flexibility, they are asked to rate each quality
+resampling” model than with the “control code +                         on a Likert scale from 1 (low quality) to 5 (high
+resampling” model.                                                      quality). We measure the agreement for each of
+   The controllable T5 models generally outper-                         the four qualities separately using Krippendorff’s
+form all of the other models in terms of the metrics                    alpha and find that the agreement (0.8, 0.91, 0.88,
+from Section 2.1. This may not be so surprising                         0.96 respectively) is reliably high.
+since these models are using the same metrics for                      In Table 4, we include the averaged results from
+control inputs at training time. The dodecaDia-                     the human study. We provide asterisks in every
+logue model outperforms our best model variant in                   case where a metric is significantly different from
+the BLEU and recall metrics, but this may also be                   the best result (bolded), as found with Welch’s
+related to the longer average token length of output                t-test. By adding the control code features and
+of that model (19 tokens on average) in comparison                  resampling, we do not see a drop in the fluency,
+to our model (16 tokens on average). In order to                    which is similarly high across all of the models. In
+get a more conclusive understanding of the perfor-                  fact, we see that most of the trade-off is between
+mance differences, we perform a human evaluation                    the relevance of the response vs. the faithfulness
+study, described below.                                             and objectivity.
+5.5    Human Evaluation                                                Our results show the faithfulness and objectivity
+We use human evaluations to gauge performance                       of the T5 models with control codes is significantly
+across multiple aspects of quality. One aspect                      higher than in the uncontrolled models (top three
+which we focus on is how much the information in                    rows). This is a promising indication that adding
+the responses is grounded in the evidence, which                    these controllable features significantly steers the
+we consider to be a strong requirement for this task.               generations towards making more grounded, ob-
+But, there are also other complementary aspects                     jective responses, with only a slight decrease in
+of response quality that are important (e.g. being                  relevance. Including resampling is not as effective
+appropriate to the conversational context). There-                  in promoting faithfulness and objectivity as the con-
+fore, we ask raters to judge a random subsample                     trol codes, though more faithful and objective than
+of model responses from the test set in terms of                    the base T5 model. By using both control codes
+four qualities: fluency (how understandable and                     and resampling (bottom row), the T5 model is able
+proficient the language is), relevance (whether it is               to achieve nearly the same level of faithfulness and
+an appropriate reply to the conversation history),                  objectivity as with just using control codes, but
+faithfulness (whether the reply is fully supported                  with higher relevance subscores.
+by the evidence), and objectivity (whether the re-                         For the full set of annotated examples, we also
+ply is fully objective, rather than sharing personal                    find that the human scores for faithfulness and ob-
+feelings or experiences).2                                              jectivity correlate with measurements from the eval-
+    2
+      The exact phrasing of the questions given to human raters         uation measures that we described in Section 2.1.
+is in the appendix.                                                     For instance, the absence of first person strongly
+
+                                                                  710
+correlates with higher objectivity according to hu-                6   Related Work
+man raters (Pearson r value of 0.8 at p value
+< 0.001). Lexical precision and entailment mea-                    Knowledge-Grounded Dialogue There has
+sures both strongly correlate with human percep-                   been significant prior work in tasks for designing
+tions of faithfulness and objectivity, as well.3 This              dialogue agents that are grounded by document
+confirms that the evaluation measures that we pro-                 knowledge (Dinan et al., 2019; Qin et al., 2019;
+pose using as controls can be appropriate estimates                Ghazvininejad et al., 2018; Tian et al., 2020;
+for how humans might perceive the groundedness                     Gopalakrishnan et al., 2019; Moghe et al., 2018).
+of a response. However, these metrics do not corre-                Some of these works investigate retrieving
+late to relevance or fluency. Based on these obser-                appropriate evidence (Lian et al., 2019; Meng
+vations, it seems that these measures can be useful                et al., 2020; Kim et al., 2020), while we assume
+to gauge the general groundedness of the response                  that a piece of evidence has already been retrieved
+but should still be viewed in tandem with other                    and focus instead on how to craft generations that
+quality scores to get a more holistic understanding                are more faithful to it. Our work is also novel in
+of performance.                                                    investigating controllable generation as one way
+                                                                   of disentangling evidence-based utterances from
+5.6   Qualitative Examples                                         more subjective utterances that may be present in
+                                                                   the training data.
+In Table 5, we highlight some examples of model
+output (we also provide additional examples in the               Controlling hallucinations in text generation
+appendix). The responses in the controllable mod-                There is a body of work that has previously stud-
+els tend to be more concise in relaying information              ied methods for integrating evidence in natural
+from the evidence. In the first example, the control-            language generation tasks, with a focus on reduc-
+lable model only shares information that is entailed             ing hallucinations. Many of these works focus
+by the evidence, excluding extra information about               on other generation tasks such as summarization
+spices that is not easily verifiable within the docu-            (Maynez et al., 2020; Zhao et al., 2020; Cao et al.,
+ment.                                                            2018; Falke et al., 2019) or data-to-text generation
+   This may also come with a slight trade-off with               (Puduppully et al., 2019). We investigate how the
+the relevance of the replies, as in the second exam-             problem of reducing hallucinations can be applied
+ple where the response - while more faithful to the              to the task of knowledge grounded dialogue. Sim-
+evidence - is not quite as pertinent to the previous             ilar to our approach, Filippova (2020) also uses
+conversation turn. Similarly, in the third example,              control codes to reduce hallucinations but focused
+the full model is faithfully citing the evidence but is          instead on data-to-text generation tasks.
+too extractive to the extent of including irrelevant             Controllable Text Generation In order to con-
+details. In the last example in Table 5, both the                trol the faithfulness of responses, we draw on
+models make the same error where they incorrectly                techniques from controllable text generation tasks.
+give an affirmative answer to the user’s question                Most relevant is the development of control-code-
+about George Foreman even though they both iden-                 style input tokens such as in CTRL (Keskar et al.,
+tify Michael Boehm as the correct inventor (a better             2019) or the LFT model of Niu and Bansal (2018).
+answer would be “No, it was Michael Boehm.”).                    Others have used decoding-time re-ranking (Falke
+This example is challenging because the answer                   et al., 2019) to constrain the outputs in a way that
+to the user’s question is not directly stated in the             is similar to our resampling method. Controllable
+evidence and requires extra inference rather than                generation has also been used previously with open-
+just extracting relevant words. To address these                 ended dialogue data (See et al., 2019) to improve
+challenges, one area for future work may be in-                  qualities such as the engagingness; however, our
+vestigating approaches that combine extractive and               work focuses on knowledge-grounded dialogues
+abstractive generation methods to be more delib-                 aiming to increase the faithfulness of the replies.
+erately selective about which portions of evidence               Recently, Wu et al. (2020) used control phrases as
+are being used and how they are integrated with                  controllable inputs to decrease hallucination as a
+information about the conversational discourse.                  form of content planning. We similarly use con-
+   3
+     The appendix includes a full table of correlation coeffi-   trollable features to reduce hallucinations in knowl-
+cients                                                           edge grounded dialogues, but our model uses stylis-
+
+                                                             711
+    Document Evidence
+    curry (, plural curries) is an umbrella term referring to a number of dishes originating in the cuisine of the indian
+    subcontinent.
+    Conversation History
+    Speaker 1: i recently discovered a new love for indian food
+    Speaker 2: i don’t think i’ve ever had indian food. can you recommend a good dish?
+    Speaker 1: :) that is what i like to know since i just discovered it.
+    Speaker 2: i know that curry is a popular spice used in indian cuisine! some curries are spiced with leaves from the curry
+    tree!
+    Speaker 1: what i do not understand, is curry a spice or a dish? or both?
+    Model                       Output
+    T5                          it’s a spice! curry is an umbrella term referring to a number of dishes originating in the indian
+                                subcontinent.
+    T5 with controls            it’s an umbrella term referring to a number of dishes originating in the indian subcontinent!
+    Document Evidence
+    in recent years, unicycles have also been used in activities similar to mountain biking or trials.
+    Conversation History
+    Speaker 2: so something interesting about me. i ride unicycle, a bike-like thing with only one wheel.
+    Speaker 1: that amazing, i have no sense of balance so even riding a bike is hard for me
+    Model                      Output
+    GPT-2                      yeah i understand that. i’m glad i didn’t have to worry about that. what about you?
+    GPT-2 with controls        unicycles have also been used in activities similar to mountain biking or trials.
+    Document Evidence
+    chanel felt the time was right for the debut of a scent that would epitomize the flapper and would speak to the liberated
+    spirit of the 1920s.
+    Conversation History
+    Speaker 1: since i was young i have loved fashion.
+    Speaker 2: have you heard of gabrielle ”coco” chanel? she was the founder and namesake of the brand chanel
+    Speaker 1: yes, i love that brand.
+    Speaker 2: coco chanel’s first perfume is something you’ve probably heard of: 5
+    Speaker 1: yes i have bought a few bottles in my life.
+    Speaker 2: 5 was actually developed by a french-russian chemist called ernest beaux.
+    Speaker 1: when did he make it
+    Model                       Output
+    T5                          he was making it in the 1920s.
+    T5 with controls            chanel felt the time was right for the debut of a scent that would epitomize the flapper and would
+                                speak to the liberated spirit of the 1920s.
+    Document Evidence
+    the concept for the grill was created by michael boehm of batavia, illinois.
+    Conversation History
+    Speaker 1: i was thinking of buying a george foreman grill, do you know anything about them?
+    Speaker 2: yes, it is a grill promoted by boxing great george foreman
+    Speaker 1: interesting, did he invent the grill himself?
+    Model                        Output
+    GPT-2                        he did and it was created by michael boehm of batavia, illinois.
+    GPT-2 with controls          yes, he did it by michael boehm of batavia, illinois
+
+                          Table 5: Generation examples from the Wizard of Wikipedia dev. set.
+
+
+tic measures which can be seen as complementary                       objective and faithful to document-based evidence.
+to content planning.
+
+7     Conclusion
+In this paper, we investigate how to design knowl-                    Acknowledgements
+edge grounded dialogue systems that are less prone
+to including hallucinations or subjective informa-
+tion. We discuss three evaluation measures related                   We would like to thank Slav Petrov and Ankur
+to the groundedness of the response and discuss                      Parikh as well as the anonymous reviewers for
+two methods for integrating these metrics into a                     their insightful comments and feedback. We also
+controllable dialogue system. We demonstrate that                    thank Nouha Dziri for sharing code and data re-
+this controllable dialogue system is able to produce                 sources. We additionally thank Ashwin Kakarla
+responses that are perceived by humans to be more                    and his team for helping with human annotations.
+
+                                                                712
+Impact Statement                                             Marjan Ghazvininejad, Chris Brockett, Ming-Wei
+                                                              Chang, Bill Dolan, Jianfeng Gao, Wen-tau Yih, and
+In this paper, we study the problem of encouraging            Michel Galley. 2018. A knowledge-grounded neural
+knowledge grounded dialogue agents to be more                 conversation model. In Proceedings of the Thirty-
+                                                              Second AAAI Conference on Artificial Intelligence,
+faithful in generating information from trusted doc-          (AAAI-18), the 30th innovative Applications of Arti-
+uments. The controllable models and evaluation                ficial Intelligence (IAAI-18), and the 8th AAAI Sym-
+measures proposed in this paper could benefit gen-            posium on Educational Advances in Artificial Intel-
+eral dialogue applications by constraining their out-         ligence (EAAI-18), New Orleans, Louisiana, USA,
+                                                              February 2-7, 2018, pages 5110–5117. AAAI Press.
+put to only discuss information that is verifiable,
+which could ensure that these systems are more               Karthik Gopalakrishnan, Behnam Hedayatnia, Qin-
+trustworthy. This could be valuable in a wide range            lang Chen, Anna Gottardi, Sanjeev Kwatra, Anu
+of applications such as educational or information-            Venkatesh, Raefer Gabriel, and Dilek Hakkani-
+                                                               Tür. 2019. Topical-Chat: Towards Knowledge-
+seeking dialogue settings where the user needs to              Grounded Open-Domain Conversations. In Proc. In-
+be given accurate information. As with other con-              terspeech 2019, pages 1891–1895.
+ditional generation models, this could also pose a
+risk if these models were misused by condition-              Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and
+                                                               Yejin Choi. 2020. The curious case of neural text
+ing on evidence from unreliable resources. In our              degeneration. In 8th International Conference on
+work, we mitigate this risk by carefully considering           Learning Representations, ICLR 2020, Addis Ababa,
+the source of our evidence and how it was curated.             Ethiopia, April 26-30, 2020. OpenReview.net.
+Before applying these models, others should simi-
+                                                             Nitish Shirish Keskar, Bryan McCann, Lav R. Varsh-
+larly take into consideration whether their evidence           ney, Caiming Xiong, and Richard Socher. 2019.
+sources are reliable and unbiased.                             CTRL: A conditional transformer language model
+                                                               for controllable generation. CoRR, abs/1909.05858.
+
+                                                             Byeongchang Kim, Jaewoo Ahn, and Gunhee Kim.
+References                                                     2020. Sequential latent knowledge selection for
+Ziqiang Cao, Furu Wei, Wenjie Li, and Sujian Li. 2018.         knowledge-grounded dialogue. In 8th International
+  Faithful to the original: Fact aware neural abstrac-         Conference on Learning Representations, ICLR
+  tive summarization. In Proceedings of the Thirty-            2020, Addis Ababa, Ethiopia, April 26-30, 2020.
+  Second AAAI Conference on Artificial Intelligence,           OpenReview.net.
+  (AAAI-18), the 30th innovative Applications of Arti-
+                                                             Rongzhong Lian, Min Xie, Fan Wang, Jinhua Peng,
+  ficial Intelligence (IAAI-18), and the 8th AAAI Sym-
+                                                               and Hua Wu. 2019. Learning to select knowledge
+  posium on Educational Advances in Artificial Intel-
+                                                               for response generation in dialog systems. In Pro-
+  ligence (EAAI-18), New Orleans, Louisiana, USA,
+                                                               ceedings of the Twenty-Eighth International Joint
+  February 2-7, 2018, pages 4784–4791. AAAI Press.
+                                                               Conference on Artificial Intelligence, IJCAI 2019,
+                                                               Macao, China, August 10-16, 2019, pages 5081–
+Emily Dinan, Stephen Roller, Kurt Shuster, Angela
+                                                               5087.
+  Fan, Michael Auli, and Jason Weston. 2019. Wizard
+  of wikipedia: Knowledge-powered conversational             Chia-Wei Liu, Ryan Lowe, Iulian Serban, Mike Nose-
+  agents. In 7th International Conference on Learn-            worthy, Laurent Charlin, and Joelle Pineau. 2016.
+  ing Representations, ICLR 2019, New Orleans, LA,             How NOT to evaluate your dialogue system: An
+  USA, May 6-9, 2019. OpenReview.net.                          empirical study of unsupervised evaluation metrics
+                                                               for dialogue response generation. In Proceedings of
+Tobias Falke, Leonardo F. R. Ribeiro, Prasetya Ajie            the 2016 Conference on Empirical Methods in Natu-
+  Utama, Ido Dagan, and Iryna Gurevych. 2019.                  ral Language Processing, pages 2122–2132, Austin,
+  Ranking generated summaries by correctness: An in-           Texas. Association for Computational Linguistics.
+  teresting but challenging application for natural lan-
+  guage inference. In Proceedings of the 57th Annual         Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Man-
+  Meeting of the Association for Computational Lin-            dar Joshi, Danqi Chen, Omer Levy, Mike Lewis,
+  guistics, pages 2214–2220, Florence, Italy. Associa-         Luke Zettlemoyer, and Veselin Stoyanov. 2019.
+  tion for Computational Linguistics.                          Roberta: A robustly optimized BERT pretraining ap-
+                                                               proach. CoRR, abs/1907.11692.
+Katja Filippova. 2020.     Controlled hallucinations:
+  Learning to generate faithfully from noisy data. In        Joshua Maynez, Shashi Narayan, Bernd Bohnet, and
+  Proceedings of the 2020 Conference on Empirical               Ryan McDonald. 2020. On faithfulness and factu-
+  Methods in Natural Language Processing: Findings,             ality in abstractive summarization. In Proceedings
+  EMNLP 2020, Online Event, 16-20 November 2020,                of the 58th Annual Meeting of the Association for
+  pages 864–870. Association for Computational Lin-            Computational Linguistics, pages 1906–1919, On-
+  guistics.                                                     line. Association for Computational Linguistics.
+
+                                                       713
+Chuan Meng, Pengjie Ren, Zhumin Chen, Weiwei Sun,               Proceedings of the 58th Annual Meeting of the As-
+  Zhaochun Ren, Zhaopeng Tu, and Maarten de Rijke.              sociation for Computational Linguistics, ACL 2020,
+  2020. Dukenet: A dual knowledge interaction net-              Online, July 5-10, 2020, pages 650–659. Associa-
+  work for knowledge-grounded conversation. In Pro-             tion for Computational Linguistics.
+  ceedings of the 43rd International ACM SIGIR con-
+  ference on research and development in Information          Thomas Wolf, Lysandre Debut, Victor Sanh, Julien
+  Retrieval, SIGIR 2020, Virtual Event, China, July 25-         Chaumond, Clement Delangue, Anthony Moi, Pier-
+  30, 2020, pages 1151–1160. ACM.                               ric Cistac, Tim Rault, Rémi Louf, Morgan Funtow-
+                                                                icz, Joe Davison, Sam Shleifer, Patrick von Platen,
+Nikita Moghe, Siddhartha Arora, Suman Banerjee, and             Clara Ma, Yacine Jernite, Julien Plu, Canwen Xu,
+  Mitesh M. Khapra. 2018. Towards exploiting back-              Teven Le Scao, Sylvain Gugger, Mariama Drame,
+  ground knowledge for building conversation sys-               Quentin Lhoest, and Alexander M. Rush. 2020.
+  tems. In Proceedings of the 2018 Conference on                Transformers: State-of-the-art natural language pro-
+  Empirical Methods in Natural Language Processing,             cessing. In Proceedings of the 2020 Conference on
+  pages 2322–2332, Brussels, Belgium. Association               Empirical Methods in Natural Language Processing:
+  for Computational Linguistics.                                System Demonstrations, pages 38–45, Online. Asso-
+                                                                ciation for Computational Linguistics.
+Tong Niu and Mohit Bansal. 2018. Polite dialogue gen-
+  eration without parallel data. Transactions of the As-      Zeqiu Wu, Michel Galley, Chris Brockett, Yizhe Zhang,
+  sociation for Computational Linguistics, 6:373–389.           Xiang Gao, Chris Quirk, Rik Koncel-Kedziorski,
+                                                                Jianfeng Gao, Hannaneh Hajishirzi, Mari Osten-
+Ratish Puduppully, Li Dong, and Mirella Lapata. 2019.           dorf, and Bill Dolan. 2020.        A controllable
+  Data-to-text generation with content selection and            model of grounded response generation. CoRR,
+  planning. Proceedings of the AAAI Conference on               abs/2005.00613.
+  Artificial Intelligence, 33(01):6908–6915.
+                                                              Saizheng Zhang, Emily Dinan, Jack Urbanek, Arthur
+Lianhui Qin, Michel Galley, Chris Brockett, Xiaodong            Szlam, Douwe Kiela, and Jason Weston. 2018. Per-
+  Liu, Xiang Gao, Bill Dolan, Yejin Choi, and Jian-             sonalizing dialogue agents: I have a dog, do you
+  feng Gao. 2019. Conversing by reading: Contentful             have pets too?     In Proceedings of the 56th An-
+  neural conversation with on-demand machine read-              nual Meeting of the Association for Computational
+  ing. In ACL, pages 5427–5436, Florence, Italy. As-            Linguistics (Volume 1: Long Papers), pages 2204–
+  sociation for Computational Linguistics.                      2213, Melbourne, Australia. Association for Com-
+                                                                putational Linguistics.
+Alec Radford, Jeff Wu, Rewon Child, David Luan,
+  Dario Amodei, and Ilya Sutskever. 2019. Language            Yizhe Zhang, Siqi Sun, Michel Galley, Yen-Chun Chen,
+  models are unsupervised multitask learners.                   Chris Brockett, Xiang Gao, Jianfeng Gao, Jingjing
+                                                                Liu, and Bill Dolan. 2020. DIALOGPT : Large-
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine             scale generative pre-training for conversational re-
+  Lee, Sharan Narang, Michael Matena, Yanqi Zhou,               sponse generation. In Proceedings of the 58th An-
+  Wei Li, and Peter J. Liu. 2020. Exploring the limits          nual Meeting of the Association for Computational
+  of transfer learning with a unified text-to-text trans-       Linguistics: System Demonstrations, ACL 2020, On-
+  former. J. Mach. Learn. Res., 21:140:1–140:67.                line, July 5-10, 2020, pages 270–278. Association
+                                                                for Computational Linguistics.
+Abigail See, Stephen Roller, Douwe Kiela, and Ja-
+  son Weston. 2019. What makes a good conver-                 Zheng Zhao, Shay B. Cohen, and Bonnie Webber. 2020.
+  sation? how controllable attributes affect human              Reducing quantity hallucinations in abstractive sum-
+  judgments. In Proceedings of the 2019 Conference              marization. In Findings of the Association for Com-
+  of the North American Chapter of the Association              putational Linguistics: EMNLP 2020, pages 2237–
+  for Computational Linguistics: Human Language                 2249, Online. Association for Computational Lin-
+  Technologies, Volume 1 (Long and Short Papers),               guistics.
+  pages 1702–1723, Minneapolis, Minnesota. Associ-
+  ation for Computational Linguistics.
+
+Kurt Shuster, Da Ju, Stephen Roller, Emily Dinan, Y-
+  Lan Boureau, and Jason Weston. 2020. The di-
+  alogue dodecathlon: Open-domain knowledge and
+  image grounded conversational agents. In Proceed-
+  ings of the 58th Annual Meeting of the Association
+  for Computational Linguistics, pages 2453–2470,
+  Online. Association for Computational Linguistics.
+
+Zhiliang Tian, Wei Bi, Dongkyu Lee, Lanqing Xue,
+  Yiping Song, Xiaojiang Liu, and Nevin L. Zhang.
+  2020. Response-anticipated memory for on-demand
+  knowledge integration in response generation. In
+
+                                                        714
+A     Appendix                                                                Test (Seen Topic)
+                                                                     BLEU     N1P       w/ Evid.    NLI
+A.1    Example Wizard of Wikipedia                                    B4       %      Prec Rec       %
+                                                                      8.8     99.6 85.6 62.3        91.9
+We include two full examples of Wizard of
+                                                                             Test (Unseen Topic)
+Wikipedia (Dinan et al., 2019) training conversa-                    BLEU     N1P      w/ Evid.     NLI
+tions in Table 8.                                                     B4       %     Prec Rec        %
+                                                                      8.5     99.4 86.1 61.1        91.5
+A.2    Training Over Faithful Responses only
+                                                           Table 6: Training on faithful responses only: Exper-
+We additionally experiment with a baseline in              imental results of a T5 model that was trained over
+which we train T5 over just the portions of the            only “faithful” examples instead of using explicit con-
+Wizard of Wikipedia training data where the evalu-         trol codes or resampling
+ation measures are satisfied (Table 6). To do this,
+we filtered the training set to only consist of the
+examples which didn’t use first person, had high         we compared the human rating for each labelled
+lexical precision, and were entailed. In spite of        example vs. the automatic measurement for that
+this being a much smaller training set (12k exam-        example.
+ples), we find that this model performs well in            A.5   Example Generation Output
+practice, outperforming the base T5 model in all
+                                                         We include some longer sets of examples in Ta-
+of the automatic metrics. In comparison with the
+                                                         bles 9 and 10. Table 9 displays the generations
+fully controlled model, we find that it generally
+                                                         from ablation results of using different control code
+performs similarly in some metrics (e.g. lexical
+                                                         features. Table 10 includes more examples with
+precision is fairly similar), but with the NLI-based
+                                                         more models.
+metrics the controllable model may be slightly bet-
+ter (up to 2% higher). An additional advantage of
+the controllable model is that it is robust enough
+for use with multiple styles of output depending on
+how the controls are set, whereas the model trained
+only on the “faithful” portion of the training data is
+more limited.
+
+A.3    Human Evaluation Instructions
+The exact phrasing of the questions to human raters
+is as follows:
+Q1: Fluency: Is this response fluent and grammati-
+cal?
+Q2: Relevant: Is this response a natural reply to
+the previous utterance in the conversation?
+Q3: Supported: Are all parts of the response
+supported by the document? (regardless of whether
+it’s fluent or relevant)
+Q4: Objective: Does the response contain only
+objective/factual information?
+                                                                                             Human Ratings
+   Human raters were asked to rate each answer on             Automatic Metric        Flu      Rel   Fai     Obj
+                                                               No First Person        0.02    -0.03 0.53     0.80
+a scale from 1 (no not at all) to 5 (yes, very much).        Lexical Prec wrt Evid    0.03    0.05   0.83    0.72
+                                                             Lexical Rec wrt Evid     0.02    0.05   0.67    0.38
+A.4    Correlations between human judgements                       % Entail          -0.04    0.01 0.68      0.70
+       and automatic metrics
+                                                         Table 7: Pearson’s R values between human metrics
+We observe that our proposed metrics generally cor-      (fluency, relevance, faithfulness, and objectivity) and
+relate to human perceptions of whether a response        automatic metrics. All of the correlation coefficients
+is faithful or objective. We include Pearson cor-        in the last two columns are statistically significant at
+relation coefficients in Table 7. To measure these,      p < 0.001.
+
+                                                     715
+                                    Wizard of Wikipedia Training Examples
+Speaker       Utterance                                               Evidence
+Apprentice    Hmm I thought it was only in France. When did
+              the race first take place?
+Wizard        The first race was organized in 1903 to increase        The race was first organized in 1903 to in-
+              newspaper sales of all things. But it has grown         crease sales for the newspaper ”L’Auto”;
+              quite a bit since then.                                 which is currently run by the Amaury Sport
+                                                                      Organisation.
+Apprentice    That’s quite funny actually! It’s certainly ex-
+              tremely popular nowadays. Which is the most
+              successful country to compete?
+Wizard        It is extremely popular. I am actually not sure         Like the other Grand Tours (the Giro d’Italia
+              which country historically has done best in it but in   and the Vuelta a España) it consists of 21
+              recent years the US has done pretty well although       stages over a little more than 3 weeks.
+              they have been found to have cheated. It is a tough
+              race though so to do well over the whole 3 week
+              time frame it requires a ton of endurance.
+Apprentice    It must be very tough to sustain such a level of
+              competitiveness for three weeks. Didn’t Lance
+              Armstrong get convicted of cheating - drugs I
+              think?
+Wizard        Yeah he was found to have been doping after deny-       For much of his career Lance Armstrong faced
+              ing it for years. He was suspected for a lot of years   persistent allegations of doping but until 2006
+              though. In 2006 the launched an official investiga-     no official investigation was undertaken.
+              tion and found him out.
+Apprentice    That’s horrible. I’m glad he got caught. Man
+              should be ashamed of himself.
+Wizard        He really should be. I think a ton of people do it      There have been allegations of doping in the
+              though. There have been allegations of doping at        Tour de France since the race began in 1903.
+              the Tour de France ever since it started in 1903!
+Apprentice    I am really glad I went to college in the US
+Wizard        I bet! Strong research suggests that US elite col-      Strong research and funding have helped
+              leges (mostly your Ivy League schools) are the          make America’s elite colleges and universities
+              best in the world.                                      among the world’s most prestigious making
+                                                                      them particularly attractive to international
+                                                                      students professors and researchers in the pur-
+                                                                      suit of academic excellence.
+Apprentice    Yes. I did not go to an Ivy League college but
+              Wake Forest where I went is also an excellent
+              school.
+Wizard        Nice!! Somehow whenever I watch CFB Wake                The Wake Forest Demon Deacons football
+              Forest is usually playing even though I live in         team represents Wake Forest University in the
+              Texas...                                                sport of American football.
+Apprentice    laugh. We have done better in football than bas-
+              ketball in recent years though it was the opposite
+              when I was at school at Wake Forest
+Wizard        I mean yeah you guys won the ACC Champi-                Wake Forest defeated Georgia Tech by a 9–6
+              onship game a little more than a decade ago. I’d        score to win its first ACC football champi-
+              say that’s pretty football relevant!                    onship since 1970 and its second in school
+                                                                      history.
+Apprentice    yes! When I was at Wake Forest Randolph
+              Childress and Rodney Rogers were playing and
+              Mugsey Bogues had just graduated. Tim Duncan
+              came just after me
+Wizard        My boy Timmy D the greatest Spurs player ever to        Many refer to Duncan as the greatest Spurs
+              play (I don’t count D Robinson because he retired       player of all time.
+              right as I started watching).
+Apprentice    Yes. And Tim Duncan is an amazingly nice per-
+              son! I am sad that even though I lived in Austin I
+              never went to see him play in San Antonio.
+Wizard        I got to see them play once when I lived in San         The San Antonio Spurs are an American pro-
+              Antonio. My (at the time) girlfriend’s dad had box      fessional basketball team based in San Anto-
+              seats. BUFFET FAJITAS OMG                               nio Texas.
+Apprentice    That sounds amazing!
+
+             Table 8: Examples of Wizard of Wikipedia (Dinan et al., 2019) conversations
+
+
+                                                        716
+   Document Evidence
+   although some origins in 18th century japan and 1830s europe, comic books were first popularized in the united
+   states during the 1930s.
+   Conversation History
+   Speaker 1: my son loves comic books, but i know literally nothing about them! are you a comic book fan?
+   Speaker 2: i know a bit about them. comic books are a publication that has sequential panels that represent individual
+   scenes.
+   Speaker 1: sounds interesting! what are some of the most popular comic books?
+   Model                             Output
+   T5 (none)                         comic books originated in 18th century japan and 1830s europe. super hero
+                                     comic books are very popular, though comic books originated in japan in the
+                                     18th century.
+   T5 (<no-first-person>) comic books have been popularized since the 18th century.
+   T5 (<high-prec>)                  comic books originated in 18th century japan and 1830s europe.
+   T5 (<entail>)                     some are japanese and europe.
+   T5 (all control codes)            well, comic books originated in 18th century japan and 1830s europe, but were
+                                     first popularized in the united states during the 1930s.
+   Document Evidence
+   a bagel with cream cheese is a common food pairing in american cuisine, the cuisine of new york city, and american
+   jewish cuisine, consisting in its basic form of an open-faced sandwich made of a bagel spread with cream cheese.
+   Conversation History
+   Speaker 1: i like to make bagels.
+   Speaker 2: i enjoy eating them. they’re usually topped with seeds baked on the outer crust. what kind of bagels do
+   you like?
+   Speaker 1: i really like a whole wear bagel.
+   Model                               Output
+   T5 (none)                           yes, i love a bagel with cream cheese, it’s a common food pairing in american
+                                       cuisine.
+   T5 (<no-first-person>) you’ve probably tried a bagel with cream cheese, but they’re a common pairing
+                                       in american cuisine.
+   T5 (<high-prec>)                    i love a bagel with cream cheese.
+   T5 (<entail>)                       a bagel with cream cheese is a common food pairing in american cuisine.
+   T5 (all control codes)              the bagel with cream cheese is a common food pairing in american cuisine.
+   Document Evidence
+   in 1963 their enormous popularity first emerged as ”beatlemania”; as the group’s music grew in sophistication, led
+   by primary songwriters lennon and mccartney, the band were integral to pop music’s evolution into an art form and
+   to the development of the counterculture of the 1960s.
+   Conversation History
+   Speaker 1: i was raised on the beatles as a kid. my parents played them all the time
+   Speaker 2: they’re great! they started in liverpool in 1960.
+   Speaker 1: yes and beetlemania hit the states in 1963. they were everywhere
+   Model                              Output
+   T5 (none)                          yes, they started to be so popular in 1963 that they became part of pop music’s
+                                      evolution.
+   T5 (<no-first-person>) it was the band that became part of the counterculture of the 1960s.
+   T5 (<high-prec>)                   yes, and in 1963 their huge popularity first emerged as beatlemania.
+   T5 (<entail>)                      yes! they were hugely popular!
+   T5 (all control codes)             they were great! they were a part of pop music’s evolution into an art form.
+   Document Evidence
+   red hair (or ginger hair) occurs naturally in 1–2% of the human population.
+   Conversation History
+   Speaker 1: hello my friend! i had a tough time growing up, im a redhead! bu tnow its getting better!
+   Model                              Output
+   T5 (none)                          i love red hair. it’s so common in 1-2% of the human population.
+   T5 (<no-first-person>) red hair occurs naturally in 1-2% of the human population
+   T5 (<high-prec>)                   i have a red hair, which occurs naturally in 1–2% of the human population.
+   T5 (<entail>)                      yea, it only occurs naturally in 1-2% of the human population.
+   T5 (all control codes)             red hair occurs naturally in 1–2% of the human population.
+
+Table 9: Model output from the Wizard of Wikipedia dev. set with different control codes (not using resampling).
+
+
+
+
+                                                             717
+Document Evidence
+its popularity (as measured by equipment sales) in the united states peaked in 2007 and has been in a decline since.
+Conversation History
+Speaker 1: i have always wanted to try snowboarding. have you ever snowboarded?
+Model                     Output
+dodecaDialogue            i have not, but i know it’s very popular in the united states.
+GPT-2 (none)              i have never been but i do know that its popularity has declined in the us since
+                          2007.
+GPT-2 (control codes)     yes, it’s popular in the united states.
+GPT-2 (resampling)        i have never been, but i’ve been to the united states and it’s been a while.
+GPT-2 (both)              yes, it has been in a decline since 2007.
+Document Evidence
+it can also be topped with additional vegetables, meats, and condiments, and can be made without cheese.
+Conversation History
+Speaker 2: i love traditional italian food, especially pizza.
+Speaker 1: i like pizza to and spaghetti
+Model                       Output
+dodecaDialogue              i like it topped with vegetables, meats, and condiments.
+T5 (none)                   i love spaghetti. it can be topped with vegetables and meats.
+T5 (control codes)          you can top it with vegetables, meats, and condiments.
+T5 (resampling)             i love spaghetti. i love that it can be topped with vegetables, meats, and condi-
+                            ments.
+T5 (both)                   it can be topped with vegetables, meats, and condiments.
+Document Evidence
+the concept for the grill was created by michael boehm of batavia, illinois.
+Conversation History
+Speaker 1: i was thinking of buying a george foreman grill, do you know anything about them?
+Speaker 2: yes, it is a grill promoted by boxing great george foreman
+Speaker 1: interesting, did he invent the grill himself?
+Model                        Output
+dodecaDialogue               yes, the concept was created by michael boehm of batavia, illinois
+GPT-2 (none)                 he did and it was created by michael boehm of batavia, illinois.
+GPT-2 (control codes)        yes, he created it by michael boehm of batavia
+GPT-2 (resampling)           no, but the concept for the grill was created by michael boehm of batavia
+GPT-2 (both)                 yes, he did it by michael boehm of batavia, illinois
+Dancing with the stars is the name of several international television series based on the format of the british tv series
+”strictly come dancing”, which is distributed by bbc worldwide, the commercial arm of the bbc.
+Conversation History
+Speaker 1: have you ever seen dancing with the starts?
+Speaker 2: yes, i have seen dancing with the stars, there are so many versions produced across the world. it is very
+interesting.
+Speaker 1: really! i didnt know that! what all countries have it?
+Model                      Output
+dodecaDialogue             it is the name of several international television series based on the format of the
+                           british tv series ”strictly come dancing”, which is distributed by bbc worldwide,
+                           the commercial arm of the bbc.
+T5 (none)                  the british tv series ”strictly come dancing” is the most popular.
+T5 (control codes)         british, uk, england, and japan.
+T5 (resampling)            it is the name of several international television series based on the format of the
+                           british tv series ”strictly come dancing”.
+T5 (both)                  there is also the british tv series ”strictly come dancing”, which is distributed by
+                           bbc worldwide.
+
+             Table 10: Additional model output examples from the Wizard of Wikipedia dev. set.
+
+
+
+
+                                                          718
+
