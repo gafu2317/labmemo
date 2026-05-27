@@ -1,6 +1,6 @@
 # Increasing Faithfulness 日本語読解ノート
 
-PDF: [08_Increasing_Faithfulness_2021.acl-long.58.pdf](../pdfs/08_Increasing_Faithfulness_2021.acl-long.58.pdf)  
+PDF: [15_Increasing_Faithfulness_2021.acl-long.58.pdf](../pdfs/15_Increasing_Faithfulness_2021.acl-long.58.pdf)  
 原題: Increasing Faithfulness in Knowledge-Grounded Dialogue with Controllable Features  
 著者: Hannah Rashkin et al. / ACL 2021
 

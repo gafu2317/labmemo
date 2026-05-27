@@ -1,6 +1,6 @@
 # PersonaEval 日本語読解ノート
 
-対象PDF: [10_PersonaEval_2508.10014.pdf](../pdfs/10_PersonaEval_2508.10014.pdf)
+対象PDF: [08_PersonaEval_2508.10014.pdf](../pdfs/08_PersonaEval_2508.10014.pdf)
 
 原題: PersonaEval: Are LLM Evaluators Human Enough to Judge Role-Play?  
 著者: Lingfeng Zhou et al.  

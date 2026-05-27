@@ -1,6 +1,6 @@
 # TimeChara 日本語読解ノート
 
-対象PDF: [08_TimeChara_2405.18027.pdf](../pdfs/08_TimeChara_2405.18027.pdf)
+対象PDF: [07_TimeChara_2405.18027.pdf](../pdfs/07_TimeChara_2405.18027.pdf)
 
 原題: TimeChara: Evaluating Point-in-Time Character Hallucination of Role-Playing Large Language Models  
 著者: Jaewoo Ahn et al.  

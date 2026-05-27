@@ -1,6 +1,6 @@
 # Grounded Minimal Edits 日本語読解ノート
 
-PDF: [05_Grounded_Minimal_Edits_2021.emnlp-main.183.pdf](../pdfs/05_Grounded_Minimal_Edits_2021.emnlp-main.183.pdf)  
+PDF: [16_Grounded_Minimal_Edits_2021.emnlp-main.183.pdf](../pdfs/16_Grounded_Minimal_Edits_2021.emnlp-main.183.pdf)  
 原題: Transferable Persona-Grounded Dialogues via Grounded Minimal Edits  
 著者: Chen Henry Wu et al. / EMNLP 2021
 

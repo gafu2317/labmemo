@@ -1,6 +1,6 @@
 # NLIによるPersona Consistency 日本語読解ノート
 
-PDF: [06_Persona_Consistent_NLI_1911.05889.pdf](../pdfs/06_Persona_Consistent_NLI_1911.05889.pdf)  
+PDF: [21_Persona_Consistent_NLI_1911.05889.pdf](../pdfs/21_Persona_Consistent_NLI_1911.05889.pdf)  
 原題: Generating Persona Consistent Dialogues by Exploiting Natural Language Inference  
 著者: Haoyu Song et al. / AAAI 2020
 

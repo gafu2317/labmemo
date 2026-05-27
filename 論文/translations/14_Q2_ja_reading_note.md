@@ -1,6 +1,6 @@
 # Q2 日本語読解ノート
 
-PDF: [07_Q2_2021.emnlp-main.619.pdf](../pdfs/07_Q2_2021.emnlp-main.619.pdf)  
+PDF: [14_Q2_2021.emnlp-main.619.pdf](../pdfs/14_Q2_2021.emnlp-main.619.pdf)  
 原題: Q2: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering  
 著者: Or Honovich et al. / EMNLP 2021
 

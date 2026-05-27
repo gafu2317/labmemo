@@ -1,6 +1,6 @@
 # PicPersona-TOD 日本語読解ノート
 
-PDF: [01_PicPersona_TOD_2025.naacl-long.403.pdf](../pdfs/01_PicPersona_TOD_2025.naacl-long.403.pdf)  
+PDF: [05_PicPersona_TOD_2025.naacl-long.403.pdf](../pdfs/05_PicPersona_TOD_2025.naacl-long.403.pdf)  
 原題: PicPersona-TOD: A Dataset for Personalizing Utterance Style in Task-Oriented Dialogue with Image Persona  
 著者: Jihyun Lee et al. / NAACL 2025
 

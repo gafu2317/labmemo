@@ -1,6 +1,6 @@
 # Global Faithfulness（PRP / APC）日本語読解ノート
 
-PDF: [10_Global_Faithfulness_PRP_2024.arxiv.2405.07726.pdf](../pdfs/10_Global_Faithfulness_PRP_2024.arxiv.2405.07726.pdf)  
+PDF: [11_Global_Faithfulness_PRP_2024.arxiv.2405.07726.pdf](../pdfs/11_Global_Faithfulness_PRP_2024.arxiv.2405.07726.pdf)  
 原題: Quantifying and Optimizing Global Faithfulness in Persona-driven Role-playing  
 著者: Letian Peng, Jingbo Shang / arXiv 2024
 

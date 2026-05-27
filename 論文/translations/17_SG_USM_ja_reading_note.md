@@ -1,6 +1,6 @@
 # SG-USM 日本語読解ノート
 
-PDF: [02_SG_USM_2023.acl-long.116.pdf](../pdfs/02_SG_USM_2023.acl-long.116.pdf)  
+PDF: [17_SG_USM_2023.acl-long.116.pdf](../pdfs/17_SG_USM_2023.acl-long.116.pdf)  
 原題: Schema-Guided User Satisfaction Modeling for Task-Oriented Dialogues  
 著者: Yue Feng et al. / ACL 2023
 

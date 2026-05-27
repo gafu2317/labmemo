@@ -1,6 +1,6 @@
 # PrefEval 日本語読解ノート
 
-PDF: [03_PrefEval_2502.09597.pdf](../pdfs/03_PrefEval_2502.09597.pdf)  
+PDF: [04_PrefEval_2502.09597.pdf](../pdfs/04_PrefEval_2502.09597.pdf)  
 原題: Do LLMs Recognize Your Preferences? Evaluating Personalized Preference Following in LLMs  
 著者: Siyan Zhao et al. / ICLR 2025
 

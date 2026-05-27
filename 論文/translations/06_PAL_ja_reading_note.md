@@ -1,6 +1,6 @@
 # Persona-Aware Alignment Framework 日本語読解ノート
 
-PDF: [04_Persona_Aware_Alignment_PAL_2025.tacl-1.77.pdf](../pdfs/04_Persona_Aware_Alignment_PAL_2025.tacl-1.77.pdf)  
+PDF: [06_Persona_Aware_Alignment_PAL_2025.tacl-1.77.pdf](../pdfs/06_Persona_Aware_Alignment_PAL_2025.tacl-1.77.pdf)  
 原題: Persona-Aware Alignment Framework for Personalized Dialogue Generation  
 著者: Guanrong Li et al. / TACL 2025
 
