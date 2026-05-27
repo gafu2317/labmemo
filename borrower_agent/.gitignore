@@ -1,0 +1,8 @@
+# 実験ログ（再実行で上書き・肥大化するためコミットしない）
+runs/*
+!runs/.gitkeep
+
+# Python（今後 src/ scripts/ を実装したとき用）
+__pycache__/
+*.py[cod]
+.env
