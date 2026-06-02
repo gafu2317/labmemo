@@ -27,8 +27,6 @@ class Case:
     title: str
     article: str
     profile: Profile
-    property_facts: dict[str, str]
-    opening: str
     slots: list[Slot]
     meta: dict[str, Any] = field(default_factory=dict)
 
@@ -51,9 +49,29 @@ class Case:
             title=data["title"],
             article=data["article"],
             profile=profile,
+            slots=slots,
+            meta=data.get("meta", {}),
+        )
+
+
+@dataclass
+class Property:
+    id: str
+    title: str
+    property_facts: dict[str, str]
+    opening: str
+    meta: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_yaml(cls, path: Path) -> Property:
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        return cls(
+            id=data["id"],
+            title=data["title"],
             property_facts=data.get("property_facts", {}),
             opening=data["opening"],
-            slots=slots,
             meta=data.get("meta", {}),
         )
 
@@ -67,6 +85,7 @@ class Turn:
 @dataclass
 class RunResult:
     case_id: str
+    property_id: str
     condition: str
     model_borrower: str
     model_landlord: str
@@ -78,6 +97,7 @@ class RunResult:
     def to_dict(self) -> dict:
         return {
             "case_id": self.case_id,
+            "property_id": self.property_id,
             "condition": self.condition,
             "model_borrower": self.model_borrower,
             "model_landlord": self.model_landlord,

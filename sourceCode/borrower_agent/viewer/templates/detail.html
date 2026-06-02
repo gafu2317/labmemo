@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ data.case_id }} / {{ data.condition }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hiragino Sans", "Meiryo", sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ヘッダー */
+    header {
+      background: #06c755;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    header a {
+      color: white;
+      text-decoration: none;
+      font-size: 20px;
+      line-height: 1;
+    }
+    header a:hover { opacity: 0.8; }
+    .header-info { flex: 1; }
+    .header-title { font-size: 16px; font-weight: bold; }
+    .header-meta { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+    .condition-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge-baseline   { background: #fff3e0; color: #e65100; }
+    .badge-structured { background: #e3f2fd; color: #1565c0; }
+
+    /* メインレイアウト：チャット左 + slots右 */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* チャットエリア（スクロール） */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #e5ddd5;
+    }
+
+    /* ターンラベル */
+    .turn-label {
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+      background: rgba(255,255,255,0.6);
+      border-radius: 10px;
+      padding: 3px 12px;
+      align-self: center;
+    }
+
+    /* メッセージ行 */
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .msg-row.landlord { flex-direction: row; }
+    .msg-row.borrower { flex-direction: row-reverse; }
+
+    /* アバター */
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .avatar-landlord { background: #bdbdbd; }
+    .avatar-borrower { background: #a5d6a7; }
+
+    /* 吹き出しグループ */
+    .bubble-group { display: flex; flex-direction: column; max-width: 65%; }
+    .msg-row.borrower .bubble-group { align-items: flex-end; }
+    .msg-row.landlord .bubble-group { align-items: flex-start; }
+
+    .speaker-name {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 3px;
+      padding: 0 4px;
+    }
+
+    /* 吹き出し */
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .bubble-landlord {
+      background: white;
+      border-top-left-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .bubble-borrower {
+      background: #dcf8c6;
+      border-top-right-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    /* slotsパネル（右） */
+    .slots-panel {
+      width: 280px;
+      flex-shrink: 0;
+      background: white;
+      border-left: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .slots-header {
+      background: #f5f5f5;
+      padding: 14px 16px;
+      font-weight: bold;
+      font-size: 14px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    .slots-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .slot-item {
+      background: #fafafa;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .slot-item.checked {
+      background: #e8f5e9;
+      border-color: #a5d6a7;
+    }
+
+    .slot-check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .slot-check-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #06c755;
+    }
+    .slot-id {
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .slot-desc {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+      margin-left: 24px;
+    }
+    .slot-evidence {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      margin-left: 24px;
+    }
+    .slot-evidence label {
+      font-size: 12px;
+      color: #888;
+    }
+    .slot-evidence input[type="number"] {
+      width: 56px;
+      padding: 4px 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .slots-footer {
+      padding: 12px 16px;
+      border-top: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 10px;
+      background: #06c755;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .save-btn:hover { background: #05a847; }
+
+    .saved-msg {
+      text-align: center;
+      font-size: 12px;
+      color: #06c755;
+      margin-top: 6px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">‹</a>
+    <div class="header-info">
+      <div class="header-title">
+        {{ data.case_id }}
+        <span class="condition-badge badge-{{ data.condition }}">{{ data.condition }}</span>
+      </div>
+      <div class="header-meta">
+        {{ data.model_borrower }} &nbsp;|&nbsp; temp={{ data.temperature }} &nbsp;|&nbsp; {{ data.max_turns }}ターン &nbsp;|&nbsp; {{ timestamp[:4] }}/{{ timestamp[4:6] }}/{{ timestamp[6:8] }} {{ timestamp[9:11] }}:{{ timestamp[11:13] }}
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- チャットエリア -->
+    <div class="chat-area" id="chatArea">
+      {% set turn_num = namespace(val=0) %}
+      {% for turn in data.turns %}
+        {% if turn.role == "landlord" and loop.index == 1 %}
+          <div class="turn-label">大家 opening</div>
+        {% elif turn.role == "borrower" %}
+          {% set turn_num.val = turn_num.val + 1 %}
+          <div class="turn-label">ターン {{ turn_num.val }}</div>
+        {% endif %}
+
+        <div class="msg-row {{ turn.role }}">
+          <div class="avatar avatar-{{ turn.role }}">
+            {% if turn.role == "landlord" %}🏠{% else %}👤{% endif %}
+          </div>
+          <div class="bubble-group">
+            <div class="speaker-name">
+              {% if turn.role == "landlord" %}大家{% else %}借り手{% endif %}
+            </div>
+            <div class="bubble bubble-{{ turn.role }}">{{ turn.content }}</div>
+          </div>
+        </div>
+
+      {% endfor %}
+    </div>
+
+    <!-- Slots パネル（右） -->
+    <div class="slots-panel">
+      <div class="slots-header">📝 Slots チェックリスト</div>
+      <form action="/log/{{ filename }}/save" method="post">
+        <div class="slots-body">
+          {% for slot_id, slot in data.slots_checklist.items() %}
+          <div class="slot-item {% if slot.mentioned %}checked{% endif %}" id="item-{{ slot_id }}">
+            <label class="slot-check-row">
+              <input
+                type="checkbox"
+                name="mentioned_{{ slot_id }}"
+                {% if slot.mentioned %}checked{% endif %}
+                onchange="toggleItem('{{ slot_id }}', this.checked)"
+              >
+              <span class="slot-id">{{ slot_id }}</span>
+            </label>
+            <div class="slot-desc">{{ slots_desc.get(slot_id, "") }}</div>
+            <div class="slot-evidence">
+              <label>ターン番号:</label>
+              <input
+                type="number"
+                name="evidence_{{ slot_id }}"
+                value="{{ slot.evidence_turn if slot.evidence_turn is not none else '' }}"
+                min="1"
+                max="{{ data.max_turns }}"
+                placeholder="—"
+              >
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="slots-footer">
+          <button type="submit" class="save-btn">保存</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    // チャットを最下部にスクロール
+    const chatArea = document.getElementById('chatArea');
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    // チェックボックスでカード色を切り替え
+    function toggleItem(slotId, checked) {
+      const item = document.getElementById('item-' + slotId);
+      if (checked) item.classList.add('checked');
+      else item.classList.remove('checked');
+    }
+  </script>
+</body>
+</html>
