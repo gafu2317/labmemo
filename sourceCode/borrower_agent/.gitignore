@@ -5,6 +5,9 @@
 runs/*
 !runs/.gitkeep
 
+# データ（ケースYAML等・肥大化するためコミットしない）
+data/
+
 # Python
 __pycache__/
 *.py[cod]
