@@ -37,11 +37,6 @@ def run_dialogue(
         history.append(Turn(role="landlord", content=l_reply))
         _print_turn("大家", t, l_reply)
 
-    slots_checklist = {
-        slot.id: {"mentioned": False, "evidence_turn": None}
-        for slot in case.slots
-    }
-
     result = RunResult(
         case_id=case.id,
         property_id=prop.id,
@@ -51,7 +46,6 @@ def run_dialogue(
         temperature=temperature,
         max_turns=max_turns,
         turns=history,
-        slots_checklist=slots_checklist,
     )
 
     _save(result)

@@ -4,13 +4,11 @@ import json
 import re
 from pathlib import Path
 
-import yaml
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
 RUNS_DIR = Path(__file__).parent.parent / "runs"
-CASES_DIR = Path(__file__).parent.parent / "data" / "cases"
 
 
 def _load_log(filename: str) -> dict:
@@ -18,26 +16,21 @@ def _load_log(filename: str) -> dict:
         return json.load(f)
 
 
-def _load_slots_desc(case_id: str) -> dict[str, str]:
-    """YAMLケースファイルからslotの説明文を取得する"""
-    yaml_path = CASES_DIR / f"{case_id}.yaml"
-    if not yaml_path.exists():
-        return {}
-    with open(yaml_path, encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    return {s["id"]: s.get("description", "") for s in data.get("slots", [])}
+def _ts_key(path: Path) -> str:
+    m = re.search(r"(\d{8}_\d{6})", path.name)
+    return m.group(1) if m else ""
 
 
 def _all_logs() -> list[dict]:
     logs = []
-    for path in sorted(RUNS_DIR.glob("*.json"), reverse=True):
+    for path in sorted(RUNS_DIR.glob("*.json"), key=_ts_key, reverse=True):
         try:
             data = _load_log(path.name)
-            m = re.search(r"(\d{8}_\d{6})", path.name)
-            ts = m.group(1) if m else ""
+            ts = _ts_key(path)
             logs.append({
                 "filename": path.name,
                 "case_id": data.get("case_id", ""),
+                "property_id": data.get("property_id", ""),
                 "condition": data.get("condition", ""),
                 "model": data.get("model_borrower", ""),
                 "timestamp": ts,
@@ -52,8 +45,13 @@ def _all_logs() -> list[dict]:
 def index():
     logs = _all_logs()
     grouped: dict[str, list] = {}
+    case_latest: dict[str, str] = {}
     for log in logs:
-        grouped.setdefault(log["case_id"], []).append(log)
+        cid = log["case_id"]
+        grouped.setdefault(cid, []).append(log)
+        if cid not in case_latest:
+            case_latest[cid] = log["timestamp"]
+    grouped = dict(sorted(grouped.items(), key=lambda kv: case_latest.get(kv[0], ""), reverse=True))
     return render_template("index.html", grouped=grouped)
 
 
@@ -62,26 +60,15 @@ def detail(filename: str):
     data = _load_log(filename)
     m = re.search(r"(\d{8}_\d{6})", filename)
     timestamp = m.group(1) if m else ""
-    slots_desc = _load_slots_desc(data.get("case_id", ""))
-    return render_template("detail.html", data=data, filename=filename,
-                           timestamp=timestamp, slots_desc=slots_desc)
+    return render_template("detail.html", data=data, filename=filename, timestamp=timestamp)
 
 
-@app.route("/log/<filename>/save", methods=["POST"])
-def save(filename: str):
+@app.route("/log/<filename>/print")
+def print_view(filename: str):
     data = _load_log(filename)
-    form = request.form
-
-    for slot_id in data["slots_checklist"]:
-        mentioned = form.get(f"mentioned_{slot_id}") == "on"
-        evidence = form.get(f"evidence_{slot_id}", "").strip()
-        data["slots_checklist"][slot_id]["mentioned"] = mentioned
-        data["slots_checklist"][slot_id]["evidence_turn"] = int(evidence) if evidence.isdigit() else None
-
-    with open(RUNS_DIR / filename, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-    return redirect(url_for("detail", filename=filename))
+    m = re.search(r"(\d{8}_\d{6})", filename)
+    timestamp = m.group(1) if m else ""
+    return render_template("print.html", data=data, filename=filename, timestamp=timestamp)
 
 
 if __name__ == "__main__":

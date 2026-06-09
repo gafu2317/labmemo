@@ -28,6 +28,9 @@
 | 14–17 | 忠実性・ grounding | Q2, Increasing Faithfulness, Grounded Minimal Edits, SG-USM |
 | 18–27 | キャラクター / RPLA | Character LLM, RoleLLM, CharacterEval, … ChARM |
 | 28–33 | 国内・NLP2025 | JSAI2024, NLP2025 P10 系 |
+|| 34 | 感情表現 × 交渉 | EvoEmo (arXiv:2509.04310) — 進化的RLで感情ポリシーを最適化、感情なし/固定感情/EvoEmo の3条件比較 |
+|| 35 | 感情 × ロールプレイ記憶 | Emotional RAG (arXiv:2410.23041) — 気分依存的記憶理論に基づく感情状態考慮の記憶検索フレームワーク |
+|| 36 | 戦略 × 表現の統合 | DMNA (ACL 2025) — Dual-Mind: MCTS+DPOの直感モジュール × Reflexionの熟慮モジュールを統合 |
 
 詳細は各 PDF ファイル名（arXiv ID / 会議名入り）を参照。
 
