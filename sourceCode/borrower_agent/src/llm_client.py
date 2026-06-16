@@ -35,23 +35,29 @@ def call_llm(
     - 自分（caller_role）の過去発話 → "assistant"
     - 相手の発話              → "user"
     """
-    messages = []
-    for turn in history:
-        api_role = "assistant" if turn.role == caller_role else "user"
-        messages.append({"role": api_role, "content": turn.content})
-
-    # Anthropic API は最初のメッセージが user である必要がある
-    # opening（大家の0ターン目）が先頭に来る場合、大家視点では assistant になるが
-    # 借り手視点では user になるので問題なし。
-    # 大家視点で最初の turn が大家（=assistant）になるケースを除去する。
+    messages = [
+        {"role": "assistant" if t.role == caller_role else "user", "content": t.content}
+        for t in history
+    ]
     if messages and messages[0]["role"] == "assistant":
         messages = messages[1:]
 
-    response = _get_client().messages.create(
+    return _get_client().messages.create(
         model=get_model(),
         max_tokens=1024,
         system=system_prompt,
         messages=messages,
+        temperature=temperature,
+    ).content[0].text
+
+
+def call_llm_single(system_prompt: str, user_message: str, temperature: float = 0) -> str:
+    """単一ターンのLLM呼び出し（Verifier用）。"""
+    response = _get_client().messages.create(
+        model=get_model(),
+        max_tokens=1024,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
         temperature=temperature,
     )
     return response.content[0].text

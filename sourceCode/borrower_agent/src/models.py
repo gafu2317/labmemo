@@ -8,6 +8,25 @@ import yaml
 
 
 @dataclass
+class TurnPlan:
+    """Plannerが各ターン前に生成する計画。BaselineとProposed両条件で共有する。"""
+    turn_goal: str   # "appeal" | "ask_fit_question" | "empathize" | "reassure" | "close"
+    phase: str       # "opening" | "middle" | "closing"
+    evidence_summary: str  # 使用する借り手情報の要約
+    ask_slot: str | None   # 今ターンで聞く物件情報のキーワード
+    owner_concern: str     # "unknown" | "cost" | "renovation" | "duration" | "other"
+
+    def to_dict(self) -> dict:
+        return {
+            "turn_goal": self.turn_goal,
+            "phase": self.phase,
+            "evidence_summary": self.evidence_summary,
+            "ask_slot": self.ask_slot,
+            "owner_concern": self.owner_concern,
+        }
+
+
+@dataclass
 class Case:
     id: str
     title: str
@@ -51,8 +70,9 @@ class Property:
 
 @dataclass
 class Turn:
-    role: str  # "borrower" | "landlord"
+    role: str     # "borrower" | "landlord"
     content: str
+    plan: TurnPlan | None = None  # 借り手ターンのみ。Plannerが生成した計画
 
 
 @dataclass
@@ -75,5 +95,8 @@ class RunResult:
             "model_landlord": self.model_landlord,
             "temperature": self.temperature,
             "max_turns": self.max_turns,
-            "turns": [{"role": t.role, "content": t.content} for t in self.turns],
+            "turns": [
+                {"role": t.role, "content": t.content, **({"plan": t.plan.to_dict()} if t.plan else {})}
+                for t in self.turns
+            ],
         }

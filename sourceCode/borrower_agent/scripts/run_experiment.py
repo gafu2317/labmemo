@@ -85,7 +85,7 @@ def main() -> None:
     parser.add_argument("--n", type=int, default=3, help="--random-cases のときの借り手人数（デフォルト: 3）")
 
     parser.add_argument("--conditions", default="baseline,proposed", help="実行する条件（カンマ区切り）")
-    parser.add_argument("--max-turns", type=int, default=6, help="最大ターン数（デフォルト: 6）")
+    parser.add_argument("--max-turns", type=int, default=4, help="最大ターン数（デフォルト: 4）")
     parser.add_argument("--temperature", type=float, default=0.0, help="temperature（デフォルト: 0）")
     args = parser.parse_args()
 

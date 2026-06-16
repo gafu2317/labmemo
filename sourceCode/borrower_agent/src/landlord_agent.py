@@ -16,5 +16,4 @@ def _fmt_facts(facts: dict[str, str]) -> str:
 
 
 def build_system_prompt(prop: Property) -> str:
-    template = _load("landlord.txt")
-    return template.format(property_facts=_fmt_facts(prop.property_facts))
+    return _load("landlord.txt").replace("{property_facts}", _fmt_facts(prop.property_facts))
