@@ -120,7 +120,7 @@ def _save(result: RunResult) -> None:
     RUNS_DIR.mkdir(exist_ok=True)
     RUNS_HTML_DIR.mkdir(exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    stem = f"{result.case_id}_{result.condition}_{result.property_id}_{ts}"
+    stem = f"{result.case_id}_{result.property_id}_{ts}_{result.condition}"
 
     json_path = RUNS_DIR / f"{stem}.json"
     json_path.write_text(json.dumps(result.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
