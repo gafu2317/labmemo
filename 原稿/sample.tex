@@ -1,22 +1,71 @@
-% FIT2026 (情報科学技術フォーラム 2026)
-% Overleaf コンパイラ: XeLaTeX を使用
+% -*- coding: utf-8; mode: latex; -*-
 
-\documentclass[twocolumn, a4paper, 10pt]{article}
-\usepackage{xeCJK}
-\setCJKmainfont{Noto Serif CJK JP}
-\setCJKsansfont{Noto Sans CJK JP}
-\setCJKmonofont{Noto Sans Mono CJK JP}
+% +++
+% latex = "lualatex"
+% +++
+
+%
+% FIT2024 向け LaTeX クラスファイル
+% https://github.com/trueroad/FITpaper-class
+%
+% サンプルファイル
+%
+% Copyright (C) 2018, 2019, 2022-2024 Masamichi Hosoda.
+% All rights reserved.
+%
+
+\documentclass[dvipdfmx]{FITpaper}
+
+% 図の貼り込み用
 \usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{url}
-\usepackage{float}
-\usepackage{geometry}
-\geometry{top=30mm, bottom=25mm, left=20mm, right=20mm, columnsep=7mm}
 
-\title{\textbf{空き家マッチングにおける借り手の熱意を代弁する\\交渉対話エージェントの試作}\\
-\normalsize Prototyping a Negotiation Dialogue Agent as a Proxy for Tenant Enthusiasm in Vacant House Matching}
-\author{福富 隆大\and 長澤 史記\and 白松 俊\\名古屋工業大学}
-\date{}
+\usepackage{dblfloatfix}
+
+\usepackage{multirow}
+
+\usepackage{booktabs}
+
+% 最終ページで両カラムの下端を揃える
+% \usepackage[balance]{nidanfloat}
+\usepackage{flushend}
+
+\makeatletter
+\renewcommand{\ackbibsection}[1]{%
+  \par
+  \vspace{6bp}%
+  {\centering\normalsize\sffamily #1\par}%
+  \vspace{2pt}%
+}
+\makeatother
+% 和文タイトル
+\jtitle{空き家マッチングにおける借り手の熱意を代弁する\\交渉対話エージェントの試作}
+
+% 欧文タイトル
+\etitle{Prototyping a Negotiation Dialogue Agent as a Proxy for Tenant Enthusiasm in Vacant House Matching}
+
+% 著者数：著者の数だけ c を書く
+\authors{cccc}
+
+% 和文著者名：著者名間に & を書く
+% 所属番号を \affmark でつける
+\jauthors{%
+  福富 隆大\affmark{1} &
+  長澤 史記\affmark{1} &
+  白松 俊  \affmark{1} &
+  XX XX   \affmark{1}
+}
+% 欧文著者名：著者名間に & を書く
+\eauthors{%
+  XXXX XXXX &
+  XXXX XXXX &
+  XXXX XXXX &
+  XXXX XXXX
+}
+
+% 所属
+% \affmark でつけた番号毎に指定
+\afftext{1}{名古屋工業大学  Nagoya Institute of Technology.}
+
 
 \begin{document}
 
@@ -36,7 +85,7 @@
 
 こうした「情報の非対称性のもとで申請者が熱意と適合性の両方を伝える対話」は，
 就職活動や研究資金申請など様々な場面に共通する課題構造であり，
-多数の相手に対して自ら行うことは負担が大きく不慣れな利用者には難しい．
+多数の相手に対して自ら行うことは負担が大きく、不慣れな利用者には難しい．
 
 本研究は，こうした状況において申請者（借り手）の記事をもとに交渉対話を代行する
 AI エージェントを試作することを最終的な目標とする．
@@ -44,7 +93,7 @@ AI エージェントを試作することを最終的な目標とする．
 感情表現が対話品質に与える影響を実証的に明らかにする価値がある．
 そのアプローチとして，感情表現の指示をプロンプトに追加する条件と追加しない条件を比較する
 予備実験を行い，システムの実現可能性と評価手法を検討する．
-
+\\
 
 % ======================================
 \section{関連研究}
@@ -53,7 +102,7 @@ AI エージェントを試作することを最終的な目標とする．
 \subsection{ロールプレイング言語エージェント（RPLA）}
 
 LLM を用いてペルソナを与え，特定の人物として対話させるロールプレイング言語エージェント
-（RPLA）の研究が進んでいる~\cite{chen2024rpla}．
+（RPLA）の研究が進んでいる~\cite{chen2024rpla,tseng2024twotales}．
 RPLA における課題として，LLM がキャラクターとして与えられた情報の範囲を超えた
 事実を発話する hallucination が挙げられている~\cite{yu2024timechara}．
 本研究が対象とする借り手記事は，特定個人の目的・価値観を記述した
@@ -64,6 +113,7 @@ Individualized Persona~\cite{chen2024rpla}に近く，
 
 LLM エージェントの感情表現に関して，
 進化的強化学習により感情ポリシーを動的に最適化する EvoEmo~\cite{evoemo2025}，
+感情状態を記憶検索に組み込む Emotional RAG~\cite{emotionalrag2024}，
 戦略的計画と表現最適化を組み合わせた DMNA~\cite{dmna2025} などが提案されている．
 これらの研究は，感情表現が LLM エージェントの説得力やペルソナ整合性に寄与することを示している．
 
@@ -95,7 +145,7 @@ LLM エージェントの感情表現に関して，
   \centering
   \caption{条件の比較}
   \label{tab:condition}
-  \small
+
   \begin{tabular}{lp{4.5cm}}
     \toprule
     条件 & 発話指示の内容 \\
@@ -108,7 +158,7 @@ LLM エージェントの感情表現に関して，
 
 捏造防止のため，記事に根拠のない断定的表現を避けるルールを
 両条件共通でプロンプトに組み込んだ．
-
+\\
 
 % ======================================
 \section{実験}
@@ -127,8 +177,8 @@ LLM エージェントの感情表現に関して，
   \centering
   \caption{実験に使用した借り手エージェント GPTs}
   \label{tab:gpts}
-  \footnotesize
-  \begin{tabular}{llp{1.6cm}}
+  \small
+  \begin{tabular}{llp{1.55cm}}
     \toprule
     GPT名 & 借り手 & 条件 \\
     \midrule
@@ -144,13 +194,12 @@ LLM エージェントの感情表現に関して，
 
 \subsection{評価軸と評価方法}
 
-表\ref{tab:survey}にアンケート項目を示す．リカートスケールは7点を最良・1点を最低とする．
+表\ref{tab:survey}にアンケート項目を示す．リカートスケールは7点を最良・1点を最低とする．\\
 
-\begin{table}[t]
+\begin{table}[h]
   \centering
   \caption{アンケート項目}
   \label{tab:survey}
-  \small
   \begin{tabular}{lp{3.2cm}l}
     \toprule
     項目 & 質問文（要約） & 尺度 \\
@@ -164,7 +213,6 @@ LLM エージェントの感情表現に関して，
   \end{tabular}
 \end{table}
 
-
 % ======================================
 \section{結果と考察}
 % ======================================
@@ -174,11 +222,10 @@ LLM エージェントの感情表現に関して，
 根拠忠実性の違反は全36件で0件であった．
 条件別評価平均を表\ref{tab:results_cond}に示す．
 
-\begin{table}[t]
+\begin{table}[h]
   \centering
   \caption{条件別評価平均（Mann-Whitney U, $n=18$/条件）}
   \label{tab:results_cond}
-  \small
   \begin{tabular}{p{2.0cm}cccc}
     \toprule
     条件 & 熱意 & 人となり & 使い方 & 貸したい \\
@@ -205,7 +252,7 @@ Mann-Whitney U 検定（両側，$n=18$/条件）の結果，
 各評価者が複数 GPT を評価しているため完全独立ではなく，また各条件に異なる借り手ケースを割り当てたため（需要特性バイアス回避），条件差はケース特性との交絡を含む参考値である．
 
 定性的コメントとして「AIらしい文章」「話が長い」「話題がずれる」などが得られ，
-GPTs の単一プロンプト制約やターン数制限に起因すると考えられる．
+GPTs の単一プロンプト制約やターン数制限に起因すると考えられる．\\
 
 
 % ======================================
@@ -221,37 +268,15 @@ GPTs の単一プロンプト制約やターン数制限に起因すると考え
 今後の課題として，交絡解消（被験者間カウンターバランス）と評価者数の拡大が挙げられる．
 
 % ======================================
-\section*{謝辞}
+\acknowledgment{%
+  本研究の一部はJSPS科研費（24K03052, 25K00866）の支援を受けた．
+}
 % ======================================
 
-本研究の一部はJSPS科研費（24K03052, 25K00866）の支援を受けた．
-
 % ======================================
+
 \footnotesize
-\begin{thebibliography}{99}
-
-\bibitem{chen2024rpla}
-  Jiangjie Chen et al.
-  ``From Persona to Personalization: A Survey on Role-Playing Language Agents.''
-  TMLR, 2024. arXiv:2404.18231.
-
-
-\bibitem{yu2024timechara}
-  Jaewoo Ahn et al.
-  ``TimeChara: Evaluating Point-in-Time Character Hallucination of Role-Playing Large Language Models.''
-  ACL Findings, 2024. arXiv:2405.18027.
-
-\bibitem{evoemo2025}
-  Yunbo Long et al.
-  ``EvoEmo: Towards Evolved Emotional Policies for LLM Agents in Multi-Turn Negotiation.''
-  arXiv:2509.04310, 2025.
-
-
-\bibitem{dmna2025}
-  Yutong Liu, Lida Shi, Rui Song, Hao Xu.
-  ``A Dual-Mind Framework for Strategic and Expressive Negotiation Agent.''
-  ACL 2025.
-
-\end{thebibliography}
+\bibliographystyle{junsrt}
+\bibliography{references}
 
 \end{document}
