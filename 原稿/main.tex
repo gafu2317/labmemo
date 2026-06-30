@@ -1,22 +1,60 @@
-% FIT2026 (情報科学技術フォーラム 2026)
-% Overleaf コンパイラ: XeLaTeX を使用
+% -*- coding: utf-8; mode: latex; -*-
 
-\documentclass[twocolumn, a4paper, 10pt]{article}
-\usepackage{xeCJK}
-\setCJKmainfont{Noto Serif CJK JP}
-\setCJKsansfont{Noto Sans CJK JP}
-\setCJKmonofont{Noto Sans Mono CJK JP}
+% +++
+% latex = "uplatex"
+% bibtex = "upbibtex"
+% +++
+
+%
+% FIT2024 向け LaTeX クラスファイル
+% https://github.com/trueroad/FITpaper-class
+%
+
+\documentclass[dvipdfmx]{FITpaper}
+
 \usepackage{graphicx}
+\usepackage{dblfloatfix}
+\usepackage{multirow}
 \usepackage{booktabs}
-\usepackage{url}
-\usepackage{float}
-\usepackage{geometry}
-\geometry{top=30mm, bottom=25mm, left=20mm, right=20mm, columnsep=7mm}
+\usepackage{flushend}
 
-\title{\textbf{空き家マッチングにおける借り手の熱意を代弁する\\交渉対話エージェントの試作}\\
-\normalsize Prototyping a Negotiation Dialogue Agent as a Proxy for Tenant Enthusiasm in Vacant House Matching}
-\author{福富 隆大\and 長澤 史記\and 白松 俊\\名古屋工業大学}
-\date{}
+\makeatletter
+\renewcommand{\ackbibsection}[1]{%
+  \par
+  \vspace{6bp}%
+  {\centering\normalsize\sffamily #1\par}%
+  \vspace{2pt}%
+}
+\makeatother
+
+% 和文タイトル
+\jtitle{空き家マッチングにおける借り手の熱意を代弁する\\交渉対話エージェントの試作}
+
+% 欧文タイトル
+\etitle{Prototyping a Negotiation Dialogue Agent as a Proxy for Tenant Enthusiasm in Vacant House Matching}
+
+% 著者数：著者の数だけ c を書く
+\authors{cccc}
+
+% 和文著者名
+\jauthors{%
+  福富 隆大\affmark{1} &
+  山崎 紘介\affmark{1} &
+  長澤 史記\affmark{1} &
+  白松 俊  \affmark{1}
+}
+
+% 欧文著者名
+\eauthors{%
+  Takahiro Fukutomi &
+  Kosuke Yamazaki   &
+  Fumiki Nagasawa   &
+  Shun Shiramatsu
+}
+
+% 所属
+\afftext{1}{名古屋工業大学  Nagoya Institute of Technology.}
+
 
 \begin{document}
 
@@ -26,17 +64,26 @@
 \section{はじめに}
 % ======================================
 
-日本では総務省調査（2023年）によると空き家数が約900万戸（過去最多）に達しており，
-活用が求められているが，多くのオーナーは使い方や借り手の人柄次第で貸してもよいと考える消極的な層である．
+日本では空き家の増加が社会問題となっており，その活用が求められている．
+総務省の住宅・土地統計調査（2023年）によると，空き家数は約900万戸に達し過去最多を更新した．
+しかし，空き家オーナー（大家）の多くは積極的に物件を貸し出そうとしているわけではなく，
+使い方や借り手の人柄によっては貸してもよいと考えている層が存在する．
 
 このような消極的なオーナー層にはたらきかけるマッチングサービスに「さかさま不動産」がある．
 従来の不動産取引では大家が借り手を選ぶのに対し，さかさま不動産では借り手が自身の活動目的や
 想いを記事として公開し，大家が「この人に貸したい」と思う相手を選ぶ．
-借り手は自身の夢・目的・背景を記事として公開するが，大家は対話時点で記事を詳しく読んでいない場合も多く，借り手が自ら熱意をアピールする必要がある．
+借り手は自身の夢・目的・背景を記事として公開しており，
+大家がその記事を読んで関心を持った場合に対話が始まる．
+ただし，大家は対話時点で記事を詳しく読んでいない場合も多く，
+借り手が自ら自己紹介・目的説明・熱意のアピールを行う必要がある．
 
-こうした「情報の非対称性のもとで申請者が熱意と適合性の両方を伝える対話」は，
-就職活動や研究資金申請など様々な場面に共通する課題構造であり，
-多数の相手に対して自ら行うことは負担が大きく不慣れな利用者には難しい．
+こうした「申請者が選定者に熱意を伝えながら適合性を確認する対話」は，
+さかさま不動産に限らず，就職活動における志望者の自己アピール，
+研究資金申請における研究者と評価委員のやりとりなど，
+様々な場面に共通する課題構造である．
+すなわち，\textbf{情報の非対称性（相手が申請者の詳細を事前に知らない）}のもとで
+申請者が熱意と適合性の両方を伝えることが求められるという課題は，広く一般に適用可能な問題として捉えられる．
+多数の相手に対して自ら行うことは負担が大きく，不慣れな利用者には難しい．
 
 本研究は，こうした状況において申請者（借り手）の記事をもとに交渉対話を代行する
 AI エージェントを試作することを最終的な目標とする．
@@ -45,7 +92,6 @@ AI エージェントを試作することを最終的な目標とする．
 そのアプローチとして，感情表現の指示をプロンプトに追加する条件と追加しない条件を比較する
 予備実験を行い，システムの実現可能性と評価手法を検討する．
 
-
 % ======================================
 \section{関連研究}
 % ======================================
@@ -53,7 +99,7 @@ AI エージェントを試作することを最終的な目標とする．
 \subsection{ロールプレイング言語エージェント（RPLA）}
 
 LLM を用いてペルソナを与え，特定の人物として対話させるロールプレイング言語エージェント
-（RPLA）の研究が進んでいる~\cite{chen2024rpla}．
+（RPLA）の研究が進んでいる~\cite{chen2024rpla,tseng2024twotales}．
 RPLA における課題として，LLM がキャラクターとして与えられた情報の範囲を超えた
 事実を発話する hallucination が挙げられている~\cite{yu2024timechara}．
 本研究が対象とする借り手記事は，特定個人の目的・価値観を記述した
@@ -64,8 +110,10 @@ Individualized Persona~\cite{chen2024rpla}に近く，
 
 LLM エージェントの感情表現に関して，
 進化的強化学習により感情ポリシーを動的に最適化する EvoEmo~\cite{evoemo2025}，
+感情状態を記憶検索に組み込む Emotional RAG~\cite{emotionalrag2024}，
 戦略的計画と表現最適化を組み合わせた DMNA~\cite{dmna2025} などが提案されている．
 これらの研究は，感情表現が LLM エージェントの説得力やペルソナ整合性に寄与することを示している．
+本研究ではこれらの知見を踏まえ，感情表現指示プロンプティングによる簡易的な実現を試みる実験を行った．
 
 
 % ======================================
@@ -95,7 +143,7 @@ LLM エージェントの感情表現に関して，
   \centering
   \caption{条件の比較}
   \label{tab:condition}
-  \small
+
   \begin{tabular}{lp{4.5cm}}
     \toprule
     条件 & 発話指示の内容 \\
@@ -109,7 +157,6 @@ LLM エージェントの感情表現に関して，
 捏造防止のため，記事に根拠のない断定的表現を避けるルールを
 両条件共通でプロンプトに組み込んだ．
 
-
 % ======================================
 \section{実験}
 % ======================================
@@ -118,17 +165,19 @@ LLM エージェントの感情表現に関して，
 
 提案システムの2条件（Baseline・Proposed）を ChatGPT の Custom GPTs として実装し，
 人間の参加者が大家役を担う対話実験を行った．
+感情表現の指示の有無のみを独立変数とし，同じ借り手情報から生成される発話の品質差を比較する．
 
 互いに異なる借り手ケースを割り当てた6種類のGPTsを用意した（表\ref{tab:gpts}）．
 参加者（研究室メンバー6名）は物件情報シートを参照しながら大家役として各GPTと4ターン程度対話し，
 全6 GPTsを評価した．
+なお，1つの借り手記事に対して Baseline または Proposed のいずれか一方の GPT を割り当てた．
 
 \begin{table}[t]
   \centering
   \caption{実験に使用した借り手エージェント GPTs}
   \label{tab:gpts}
-  \footnotesize
-  \begin{tabular}{llp{1.6cm}}
+  \small
+  \begin{tabular}{llp{1.55cm}}
     \toprule
     GPT名 & 借り手 & 条件 \\
     \midrule
@@ -146,11 +195,10 @@ LLM エージェントの感情表現に関して，
 
 表\ref{tab:survey}にアンケート項目を示す．リカートスケールは7点を最良・1点を最低とする．
 
-\begin{table}[t]
+\begin{table}[h]
   \centering
   \caption{アンケート項目}
   \label{tab:survey}
-  \small
   \begin{tabular}{lp{3.2cm}l}
     \toprule
     項目 & 質問文（要約） & 尺度 \\
@@ -164,21 +212,43 @@ LLM エージェントの感情表現に関して，
   \end{tabular}
 \end{table}
 
-
 % ======================================
 \section{結果と考察}
 % ======================================
 
+\subsection{根拠忠実性}
+
+全36件（6 GPTs $\times$ 6名）の対話において違反件数は0件であった．
+ただし，計算から導いた数値（例：「35年以上続いてきた」を1991年創設から算出）を
+用いた発話は観察された．これらは捏造ではなく，算術的に正当な推論として許容した．
+
 \subsection{条件間の比較}
 
-根拠忠実性の違反は全36件で0件であった．
-条件別評価平均を表\ref{tab:results_cond}に示す．
+各 GPT の評価平均を表\ref{tab:results_gpt}に，条件別平均を表\ref{tab:results_cond}に示す．
 
-\begin{table}[t]
+\begin{table}[h]
+  \centering
+  \caption{GPT別評価平均（n=6）}
+  \label{tab:results_gpt}
+  \small
+  \begin{tabular}{llcccc}
+    \toprule
+    GPT & 条件 & 熱意 & 人となり & 使い方 & 貸したい \\
+    \midrule
+    整体院 & B & 4.33 & 3.83 & 5.83 & 4.83 \\
+    託児カフェ & B & 5.50 & 5.17 & 6.17 & 5.50 \\
+    陶作家 & B & 5.17 & 4.67 & 6.33 & 4.67 \\
+    アウトドア & P & 5.00 & 3.83 & 5.00 & 4.50 \\
+    ピラティス & P & 5.67 & 5.00 & 5.50 & 5.33 \\
+    学童クラブ & P & 5.83 & 4.00 & 5.00 & 5.17 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[h]
   \centering
   \caption{条件別評価平均（Mann-Whitney U, $n=18$/条件）}
   \label{tab:results_cond}
-  \small
   \begin{tabular}{p{2.0cm}cccc}
     \toprule
     条件 & 熱意 & 人となり & 使い方 & 貸したい \\
@@ -199,13 +269,23 @@ Mann-Whitney U 検定（両側，$n=18$/条件）の結果，
 感情表現指示の付加により感情的訴求に重心が移り，
 物件利用イメージの提示が相対的に少なくなった結果と考えられる．
 
-熱意の伝達は Proposed がやや上回ったが（5.50 vs 5.00，$U=118.5, p=.143$），
-人となり・貸したいを含む他の3項目でも有意差はなく，評価者数・GPTs数の拡充が必要である．
+熱意の伝達スコアは Proposed が Baseline をやや上回ったが（5.50 vs 5.00），
+有意差は認められなかった（$U=118.5, p=.143$）．
+感情表現指示の効果を確認するには評価者数・GPT数の拡充が必要である．
 
-各評価者が複数 GPT を評価しているため完全独立ではなく，また各条件に異なる借り手ケースを割り当てたため（需要特性バイアス回避），条件差はケース特性との交絡を含む参考値である．
+人となり（$p=.807$）および貸したいと思うか（$p=.629$）は
+両条件で有意差を示さなかった．
 
-定性的コメントとして「AIらしい文章」「話が長い」「話題がずれる」などが得られ，
-GPTs の単一プロンプト制約やターン数制限に起因すると考えられる．
+なお，各評価者が複数 GPT を評価しているため評価値は完全独立ではなく，
+検定の解釈には留意が必要である．
+また，各条件に異なる借り手ケースを割り当てたため，
+条件間の差異は感情表現指示の効果と借り手ケースの特性が交絡した参考値にとどまる
+（需要特性バイアス回避のためこの設計を採用した）．
+
+評価者からの定性的コメントとして，
+「AIらしい文章」「話が長い」「身の上話後の質問で話題がずれる」
+「答えにくい地域質問（地域との交流の雰囲気など）への対応が苦手」
+といった観察が得られた．これらは GPTs の制約（多段 LLM 呼び出しが不可なため計画生成を単一プロンプトで代替したこと，ターン数に制限があること）に起因すると考えられる．
 
 
 % ======================================
@@ -214,44 +294,21 @@ GPTs の単一プロンプト制約やターン数制限に起因すると考え
 
 本研究では，借り手の熱意を代弁して大家と交渉対話を行う AI エージェントを試作し，
 感情表現指示の有無を独立変数とした比較実験を行った．
-結果，根拠忠実性の違反は0件であり，
-使い方のイメージスコアでは Baseline が Proposed を有意に上回った（$p=.002$）．
+根拠忠実性の違反は全36件で0件であり，捏造防止の観点では有効に機能した．
+使い方のイメージスコアでは Baseline が Proposed を有意に上回り（$p=.002$），
 熱意の伝達では Proposed がやや上回ったが有意差には至らなかった（$p=.143$）．
+感情表現指示が発話の重心を変える可能性が示唆された．
 
-今後の課題として，交絡解消（被験者間カウンターバランス）と評価者数の拡大が挙げられる．
-
-% ======================================
-\section*{謝辞}
-% ======================================
-
-本研究の一部はJSPS科研費（24K03052, 25K00866）の支援を受けた．
+今後の課題として，交絡の解消（同一ケースを被験者間でカウンターバランスし，
+各参加者は一方の条件のみ評価する計画）および評価者数の拡大が挙げられる．
 
 % ======================================
-\footnotesize
-\begin{thebibliography}{99}
+\acknowledgment{%
+  本研究の一部はJSPS科研費（24K03052, 25K00866）の支援を受けた．
+}
+% ======================================
 
-\bibitem{chen2024rpla}
-  Jiangjie Chen et al.
-  ``From Persona to Personalization: A Survey on Role-Playing Language Agents.''
-  TMLR, 2024. arXiv:2404.18231.
-
-
-\bibitem{yu2024timechara}
-  Jaewoo Ahn et al.
-  ``TimeChara: Evaluating Point-in-Time Character Hallucination of Role-Playing Large Language Models.''
-  ACL Findings, 2024. arXiv:2405.18027.
-
-\bibitem{evoemo2025}
-  Yunbo Long et al.
-  ``EvoEmo: Towards Evolved Emotional Policies for LLM Agents in Multi-Turn Negotiation.''
-  arXiv:2509.04310, 2025.
-
-
-\bibitem{dmna2025}
-  Yutong Liu, Lida Shi, Rui Song, Hao Xu.
-  ``A Dual-Mind Framework for Strategic and Expressive Negotiation Agent.''
-  ACL 2025.
-
-\end{thebibliography}
+\bibliographystyle{junsrt}
+\bibliography{references}
 
 \end{document}
