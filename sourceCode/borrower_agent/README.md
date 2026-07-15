@@ -7,8 +7,8 @@
 
 | 版 | 仮説 | 実験での位置づけ |
 |---|---|---|
-| `v1_fixed_emotion` | 感情表現指示の有無（phase固定の感情レシピ） | FIT2026 時点の手法。次実験では **Baseline**（＝旧 Proposed） |
-| `v2_adaptive_planner` | 状況に応じて「何を・どれだけ」言うかを Planner が都度決定 | 次実験の **Proposed**（実装予定。現状は v1 からのコピー） |
+| `v1_fixed_emotion` | 感情表現指示の有無（phase固定の感情レシピ） | FIT2026 時点の手法 |
+| `v2_adaptive_planner` | 面接・プレゼン由来の修辞ムーブを状況に応じて選択 | 次実験。Baseline=v1感情レシピ、Proposed=6ムーブ |
 
 ## ディレクトリ構成
 

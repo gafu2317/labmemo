@@ -84,7 +84,7 @@ def run_dialogue(
     _print_turn("大家", 0, prop.opening)
 
     for t in range(1, max_turns + 1):
-        plan = plan_turn(case, history, temperature=temperature)
+        plan = plan_turn(case, history, condition=condition, temperature=temperature)
         _print_plan(t, plan)
 
         b_system = build_realizer_prompt(case, condition, plan)
@@ -113,7 +113,16 @@ def _print_turn(speaker: str, turn_num: int, content: str) -> None:
 
 
 def _print_plan(turn_num: int, plan) -> None:
-    print(f"\n[計画 ターン{turn_num}] goal={plan.turn_goal} phase={plan.phase} ask={plan.ask_slot}")
+    parts = [f"goal={plan.turn_goal}"]
+    if plan.move:
+        parts.append(f"move={plan.move}")
+    if plan.phase:
+        parts.append(f"phase={plan.phase}")
+    if plan.key_message:
+        parts.append(f"key={plan.key_message}")
+    if plan.ask_slot:
+        parts.append(f"ask={plan.ask_slot}")
+    print(f"\n[計画 ターン{turn_num}] " + " ".join(parts))
 
 
 def _save(result: RunResult) -> None:
@@ -133,7 +142,13 @@ def _save(result: RunResult) -> None:
 
 
 def _fmt_plan_chip(plan) -> str:
-    parts = [plan.turn_goal, f"phase={plan.phase}"]
+    parts = [plan.turn_goal]
+    if plan.move:
+        parts.append(f"move={plan.move}")
+    if plan.phase:
+        parts.append(f"phase={plan.phase}")
+    if plan.key_message:
+        parts.append(f"key={plan.key_message}")
     if plan.ask_slot:
         parts.append(f"ask={plan.ask_slot}")
     if plan.owner_concern not in (None, "unknown"):
