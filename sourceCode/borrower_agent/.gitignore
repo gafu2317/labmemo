@@ -1,15 +1,17 @@
 # 環境変数（APIキーなど）
 .env
+**/.env
 
 # 実験ログ（再実行で上書き・肥大化するためコミットしない）
-runs/*
-!runs/.gitkeep
+**/runs/*
+!**/runs/.gitkeep
 
 # データ（ケースYAML等・肥大化するためコミットしない）
-data/
+shared/data/
 
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *.pyo
 .venv/

@@ -133,4 +133,4 @@ case01_property01_baseline_20260603.json, baseline, 2, 3/5, 3, 3, "ターン3で
 case01_property01_structured_20260603.json, structured, 0, 5/5, 4, 4, ""
 ```
 
-評価結果は `eval/scores.csv` に記録する。
+評価結果は `shared/eval/scores.csv` に記録する。

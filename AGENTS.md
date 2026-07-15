@@ -38,4 +38,6 @@
 
 - `研究方針.md`：研究全体の方針
 - `AGENT.md`：逆さま不動産の概要と借り手エージェントの設計方針
-- `SourceCode/borrower_agent/設計書.md`：実装の設計書
+- `SourceCode/borrower_agent/README.md`：バージョン対応表
+- `SourceCode/borrower_agent/v1_fixed_emotion/設計書.md`：固定感情表現版の設計書
+- `SourceCode/borrower_agent/v2_adaptive_planner/設計書.md`：動的発話構成版の設計書

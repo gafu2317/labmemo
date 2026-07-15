@@ -32,6 +32,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
+SHARED = ROOT.parent / "shared"
 sys.path.insert(0, str(ROOT / "src"))
 
 from dotenv import load_dotenv
@@ -41,8 +42,8 @@ import yaml
 from models import Case, Property
 from dialogue_runner import run_dialogue
 
-PROPERTIES_DIR = ROOT / "data" / "properties"
-DEFAULT_CASES_DIR = ROOT / "data" / "eval_cases"
+PROPERTIES_DIR = SHARED / "data" / "properties"
+DEFAULT_CASES_DIR = SHARED / "data" / "eval_cases"
 
 
 def get_all_case_ids(cases_dir: Path) -> list[str]:
@@ -75,7 +76,7 @@ def main() -> None:
     parser.add_argument(
         "--cases-dir",
         default="eval_cases",
-        help="ケースYAMLが格納されたフォルダ名（data/ 以下、デフォルト: eval_cases）",
+        help="ケースYAMLが格納されたフォルダ名（shared/data/ 以下、デフォルト: eval_cases）",
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -89,7 +90,7 @@ def main() -> None:
     parser.add_argument("--temperature", type=float, default=0.0, help="temperature（デフォルト: 0）")
     args = parser.parse_args()
 
-    cases_dir = ROOT / "data" / args.cases_dir
+    cases_dir = SHARED / "data" / args.cases_dir
 
     # ケースID一覧
     if args.all_cases:
