@@ -7,8 +7,16 @@ from pathlib import Path
 
 from borrower_policy import build_system_prompt as build_realizer_prompt
 from landlord_agent import build_system_prompt as landlord_prompt
+from landlord_agent import (
+    fallback_landlord_reply,
+    opening_action,
+    select_landlord_action,
+    validate_landlord_reply,
+    validate_landlord_scenario,
+)
 from llm_client import call_llm, get_model
 from models import Case, Property, RunResult, Turn
+from passion_evidence import extract_passion_evidence
 from planner import plan_turn
 from verifier import verify_utterance
 
@@ -76,32 +84,56 @@ def run_dialogue(
     max_turns: int = 4,
     temperature: float = 0,
 ) -> RunResult:
-    l_system = landlord_prompt(prop)
+    validate_landlord_scenario(prop, max_turns)
     model = get_model()
     history: list[Turn] = []
+    passion_evidence_inventory = (
+        extract_passion_evidence(case, temperature=temperature)
+        if condition == "proposed"
+        else None
+    )
 
-    history.append(Turn(role="landlord", content=prop.opening))
+    initial_action = opening_action(prop)
+    history.append(Turn(role="landlord", content=prop.opening, landlord_action=initial_action))
     _print_turn("大家", 0, prop.opening)
 
     for t in range(1, max_turns + 1):
-        plan = plan_turn(case, history, condition=condition, temperature=temperature)
+        plan = plan_turn(
+            case,
+            history,
+            condition=condition,
+            turn_number=t,
+            max_turns=max_turns,
+            temperature=temperature,
+            passion_evidence_inventory=passion_evidence_inventory,
+        )
         _print_plan(t, plan)
 
         b_system = build_realizer_prompt(case, condition, plan)
         b_reply = call_llm(b_system, history, caller_role="borrower", temperature=temperature)
-        b_reply = verify_utterance(b_reply, case, temperature=temperature)
+        b_reply = verify_utterance(
+            b_reply,
+            case,
+            history=history,
+            plan=plan,
+            temperature=temperature,
+        )
 
         history.append(Turn(role="borrower", content=b_reply, plan=plan))
         _print_turn("借り手", t, b_reply)
 
-        l_reply = call_llm(l_system, history, caller_role="landlord", temperature=temperature)
-        history.append(Turn(role="landlord", content=l_reply))
+        action = select_landlord_action(prop, response_turn=t)
+        l_system = landlord_prompt(prop, action)
+        l_reply = _generate_landlord_reply(l_system, history, action, temperature)
+        history.append(Turn(role="landlord", content=l_reply, landlord_action=action))
+        _print_landlord_action(t, action)
         _print_turn("大家", t, l_reply)
 
     result = RunResult(
         case_id=case.id, property_id=prop.id, condition=condition,
         model_borrower=model, model_landlord=model,
         temperature=temperature, max_turns=max_turns, turns=history,
+        passion_evidence_inventory=passion_evidence_inventory,
     )
     _save(result)
     return result
@@ -115,7 +147,11 @@ def _print_turn(speaker: str, turn_num: int, content: str) -> None:
 def _print_plan(turn_num: int, plan) -> None:
     parts = [f"goal={plan.turn_goal}"]
     if plan.move:
-        parts.append(f"move={plan.move}")
+        parts.append(f"evidence={plan.move}")
+    if plan.response_strategy:
+        parts.append(f"response={plan.response_strategy}")
+    if plan.evidence_quote:
+        parts.append(f"quote={plan.evidence_quote}")
     if plan.phase:
         parts.append(f"phase={plan.phase}")
     if plan.key_message:
@@ -123,6 +159,27 @@ def _print_plan(turn_num: int, plan) -> None:
     if plan.ask_slot:
         parts.append(f"ask={plan.ask_slot}")
     print(f"\n[計画 ターン{turn_num}] " + " ".join(parts))
+
+
+def _print_landlord_action(turn_num: int, action) -> None:
+    print(f"\n[大家行為 ターン{turn_num}] act={action.act} topic={action.topic}")
+
+
+def _generate_landlord_reply(system_prompt: str, history: list[Turn], action, temperature: float) -> str:
+    reply = call_llm(system_prompt, history, caller_role="landlord", temperature=temperature)
+    violations = validate_landlord_reply(action, reply)
+    if not violations:
+        return reply
+
+    correction = "\n\n## 直前の出力に対する修正指示（最優先）\n- " + "\n- ".join(violations)
+    correction += "\n今ターンの act / topic を変えず、最大2文で再生成すること。"
+    retry = call_llm(
+        system_prompt + correction,
+        history,
+        caller_role="landlord",
+        temperature=temperature,
+    )
+    return retry if not validate_landlord_reply(action, retry) else fallback_landlord_reply(action)
 
 
 def _save(result: RunResult) -> None:
@@ -144,7 +201,9 @@ def _save(result: RunResult) -> None:
 def _fmt_plan_chip(plan) -> str:
     parts = [plan.turn_goal]
     if plan.move:
-        parts.append(f"move={plan.move}")
+        parts.append(f"evidence={plan.move}")
+    if plan.response_strategy:
+        parts.append(f"response={plan.response_strategy}")
     if plan.phase:
         parts.append(f"phase={plan.phase}")
     if plan.key_message:
@@ -169,11 +228,16 @@ def _to_html(result: RunResult, ts: str) -> str:
         if turn.role == "landlord":
             label = "大家 opening" if landlord_n == 0 else f"ターン {landlord_n}"
             turns_html.append(f'<div class="turn-label">{label}</div>')
+            action_chip = ""
+            if turn.landlord_action:
+                action_label = f"act={turn.landlord_action.act} · topic={turn.landlord_action.topic}"
+                action_chip = f'<div class="plan-chip">🎯 {html.escape(action_label)}</div>'
             turns_html.append(f'''
 <div class="msg-row landlord">
   <div class="avatar avatar-landlord">🏠</div>
   <div class="bubble-group">
     <div class="speaker-name">大家</div>
+    {action_chip}
     <div class="bubble bubble-landlord">{c}</div>
   </div>
 </div>''')

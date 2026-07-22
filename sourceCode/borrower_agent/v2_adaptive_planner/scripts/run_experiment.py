@@ -59,7 +59,7 @@ def build_case_to_property_map() -> dict[str, str]:
         target = data.get("meta", {}).get("target_case")
         if target:
             mapping[target] = data["id"]
-        # property01_kuwana はnotesのみ → case01_ceramic_atelier を直接登録
+        # 旧共有データとの互換性：property01 は target_case が notes にのみ記載されている。
         elif data["id"] == "property01_kuwana":
             mapping["case01_ceramic_atelier"] = data["id"]
     return mapping

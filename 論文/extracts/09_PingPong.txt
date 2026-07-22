@@ -1,0 +1,941 @@
+                                            PingPong: A Benchmark for Role-Playing Language Models with User
+                                                          Emulation and Multi-Model Evaluation
+
+                                                                                       Ilya Gusev
+                                                                           Independent researcher / Amsterdam
+                                                                                phoenixilya@gmail.com
+
+
+
+                                                              Abstract
+                                            We introduce a benchmark for evaluating the
+                                            role-playing capabilities of language models.
+                                            Our approach leverages different language
+
+
+
+
+arXiv:2409.06820v4 [cs.CL] 9 Apr 2025
+                                            models to simulate users in dynamic, multi-
+                                            turn conversations and assess the resulting dia-
+                                            logues. Our methodology involves three main
+                                            components: a player model that adopts a spe-
+                                            cific character role, an interrogator model that
+                                            simulates user behavior in a specific situation,
+                                            and a judge model ensemble that evaluates con-
+                                            versation quality with 3 metrics: character con-
+                                            sistency, entertainment value, and language flu-
+                                            ency. We evaluated more than 40 models in
+                                            both English and Russian, with each model
+                                            participating in 64 conversations with 8 char-
+                                            acters and 8 situations. We conducted experi-
+                                            ments comparing automated evaluations with
+                                            human annotations to validate our approach,
+                                            demonstrating strong correlations across mul-
+                                            tiple criteria. This work provides a foundation        Figure 1: This diagram illustrates the flow of interac-
+                                            for a robust and dynamic evaluation of different       tions in the proposed benchmark. There are three main
+                                            model capabilities in interactive scenarios.           components with different language models: a player,
+                                                                                                   an interrogator, and a judge ensemble. The player as-
+                                        1    Introduction                                          sumes some character role, the interrogator acts as a
+                                                                                                   user in a specific situation, and the judges evaluate final
+                                        Language models, which predict plausible lan-              conversations.
+                                        guage, have dominated natural language process-
+                                        ing since BERT (Devlin et al., 2019), with models
+                                        like ChatGPT (Ouyang et al., 2022) showcasing              directly impacts user satisfaction and engagement.
+                                        advanced conversational capabilities.                      As companies continue to develop dedicated plat-
+                                           In this paper, we focus on role-playing language        forms for role-playing language models, such as
+                                        models for entertainment purposes. These models            Character.ai1 or Chai(Irvine et al., 2023), robust
+                                        are assigned specific characters or personas and           evaluation frameworks are critical. Developers of
+                                        are tasked with maintaining these roles while en-          such systems cannot effectively improve them or
+                                        gaging and entertaining users. Although there are          compare competing approaches without standard-
+                                        other important applications of role-playing lan-          ized methods to assess how well models maintain
+                                        guage models, such as training mental health spe-          character consistency and entertain users.
+                                        cialists (Louie et al., 2024) or simulating human             To fill this gap, we introduce a novel benchmark
+                                        opinion dynamics (Chuang et al., 2024), they are           for evaluating role-playing language models. From
+                                        beyond the scope of this paper.                            our experience with language models, we believe
+                                           People seek entertainment through interactions          that direct interaction is the most effective way to
+                                        with their favorite characters from games, movies,         assess a language model’s conversational abilities.
+                                                                                                      1
+                                        and TV shows. The quality of these interactions                   https://character.ai
+
+
+                                                                                               1
+However, humans often lack time to test new mod-             boards3 and all conversations with example-wise
+els manually, and many popular benchmarks are                scores, which allows the eyeballing of common
+limited to single-turn interactions (Dubois et al.,          errors and problems of evaluated models. It is
+2024; Hendrycks et al., 2021). These benchmarks              available for English and Russian languages.
+are also becoming less reliable due to test data con-
+tamination (Deng et al., 2024). To address this, we          2       Related work
+propose using language models to simulate users in
+                                                             Role-playing capabilities and evaluation. Vari-
+role-playing conversations and automatically eval-
+                                                             ous commercial services exploit the role-playing
+uate the resulting dialogues.
+                                                             abilities of language models, including Character.ai
+   Our methodology, illustrated in Figure 1, in-             and Chai. Academic and community efforts are un-
+volves three key components: a player model that             derway to create similar systems with open datasets,
+assumes a character role, an interrogator model              code, and models, such as PIPPA, ChatHaruhi,
+that simulates user behavior, and a judge model              Character-LLM (Gosling et al., 2023; Li et al.,
+that evaluates the quality of the conversation. Our          2023; Shao et al., 2023), MythoMax4 , or Magnum5 .
+work builds on existing benchmarks, such as the              Several static benchmarks for role play exist, in-
+EQ-bench (Paech, 2023), introducing an approach              cluding ECHO, InCharacter, RAIDEN, and Char-
+to evaluate the role-playing abilities of language           acterEval (Ng et al., 2024; Wang et al., 2024; Wu
+models.                                                      et al., 2025; Tu et al., 2024).
+   Our contributions:                                           PersonaGym (Samuel et al., 2024) is close to our
+   • We propose a benchmark for assessing the                work, featuring dynamic question generation based
+      role-playing abilities of language models. The         on the environment (“situation” in our terminol-
+      combination of the following traits makes it           ogy) and the currently selected persona. There is
+      novel:                                                 also a very similar dynamic benchmark, RPBench-
+         – Multi-turn: All conversations have mul-           Auto6 . It is based on the same assumptions and
+            tiple turns to be closer to the real usage       features and has a structure similar to one of the ver-
+            of role-playing models.                          sions of our benchmark. The significant difference
+         – Dynamic: The interrogator questions are           from our work is that their evaluation is based on
+            generated by sampling language models            side-by-side comparisons with the baseline model
+            and are not predefined. Each evaluation          responses, while we produce single-point evalu-
+            run produces different questions, mak-           ations. One can also utilize evaluation based on
+            ing it harder for models to memorize re-         multiple choice questions similar to the one devel-
+            sponses and making test data contamina-          oped in the DITTO framework (Lu et al., 2024).
+            tion harder.                                     Although it efficiently assesses the role consistency,
+         – Multi-model: Several judges mitigate in-          the evaluation is based heavily on questions based
+            dividual model biases and correlate bet-         on artificial knowledge that may not reflect typical
+            ter with humans. It also allows for the          user interactions with role-playing systems.
+            evaluation of the models that are used as           One common problem for most of these bench-
+            judges.                                          marks is a lack of long-term support and repro-
+   • We validate our benchmark through correla-              ducibility, which might be caused by the high cost
+      tion with manual annotations and comparison            of evaluations. Regularly adding new models to a
+     with other benchmarks.                                  benchmark is crucial, as this is the only way the
+   • We show that the multi-model setup correlates           benchmark can guide practical decisions.
+      better with humans than a single model.                   A different approach to evaluation would be to
+   • We discover that fine-tuning models for cre-            use online metrics, such as retention rates or user
+      ative writing improves their role-playing abili-       ratings (Irvine et al., 2023). However, this approach
+      ties.                                                  is only viable if you already have a service with a
+   All results, prompts, and scripts are available               3
+                                                                  https://ilyagusev.github.io/ping_pong_bench
+online2 .                                                        4
+                                                                  https://huggingface.co/Gryphe/
+   The benchmark website has up-to-date leader-              MythoMax-L2-13b
+                                                                5
+                                                                  https://huggingface.co/anthracite-org/
+                                                             magnum-v2-123b
+   2                                                            6
+       https://github.com/ilyagusev/ping_pong_bench               https://boson.ai/rpbench-blog
+
+
+                                                         2
+substantial user base.                                      tive, and the use of machine-based interrogators
+   Automatic evaluation with language models.               and judges.
+LLM-as-a-Judge (Zheng et al., 2023) is an evalua-              Language models can assume three possible
+tion method that relies on language models, such as         roles.
+GPT-4, instead of humans. Popular benchmarks us-               • Player assumes the role of a specific character
+ing this method include AlpacaEval, EQ-bench,                     based on a character card provided.
+Creative Writing, and BiGGen Bench (Dubois                     • Interrogator engages the player within a
+et al., 2024; Paech, 2023; Kim et al., 2024). The                 given situation or towards a specific goal, sim-
+validity of these benchmarks is based on their high               ulating user behavior.
+correlation with human annotations, specifically               • Judge evaluates the player’s responses against
+with Chatbot Arena (Chiang et al., 2024).                         predetermined criteria.
+   Multi-model evaluation. However, all these                  Role assignments are implemented through a
+benchmarks are based on a single model as a judge,          combination of system and user prompts. We use
+which may introduce various biases, including self-         only models that support chat templates. All in-
+evaluation bias (Panickssery et al., 2024; Xu et al.,       structions are incorporated into the user prompt for
+2024). PoLL (Verga et al., 2024) authors aggre-             models without dedicated system prompts, such as
+gate evaluations from different language models             Gemma 2 (GemmaTeam, 2024).
+similarly to us, with average pooling. They show               This setup is asymmetric since the player only
+that ensembling different models for evaluation             gets the character description, while the interroga-
+increases the correlation with human annotations.           tor only gets the situation information. This is
+There is another more agentic approach (Chan et al.,        intentional, as typical use cases of role-playing
+2024) with a referee team.                                  models are asymmetrical. However, it is possible
+   Multi-turn evaluation. Most benchmarks are               to modify it to make it symmetric by providing
+single-turn, which contrasts with the real-world            character descriptions and situations to both the
+usage of language models. There are multi-turn              player and the interrogator. Symmetrical setups
+benchmarks, such as MT-Bench-101 (Bai et al.,               might be helpful in other domains.
+2024) and MT-Eval (Kwan et al., 2024), though
+                                                            3.2   Judge
+they focus on specific capabilities, and their eval-
+uation procedures still differ from how humans              The scoring is single-point, with no reference exam-
+implicitly rate language models.                            ples or pairs. The judge used three main evaluation
+   Data contamination. Another major problem                criteria:
+for static public benchmarks is data leakage into              • Character consistency: The player’s answers
+the pre-training data sets of language models (Deng               align perfectly with the assigned character;
+et al., 2024). It is challenging to avoid contamina-              they correspond to the character’s description.
+tion since such tests are usually stored online and            • Entertainment value: The player’s responses
+considered “code” during pre-training. This can                   are engaging and entertaining.
+occur even with no malicious intent from the model             • Language fluency: The language used by the
+creators. The most obvious solution is to close the               player is of the highest quality and is free of
+benchmarks completely, which requires trusting the                errors. The player is perfectly fluent.
+benchmark organizers, which is difficult in a highly           These criteria reflect the main things we expect
+competitive environment. Alternative solutions in-          from the model during role-playing. We also ask
+clude regularly updating benchmarks with new test           whether the player refused to answer.
+data (White et al., 2024) or dynamically generating            We prompt a model to explain itself before giv-
+test data using existing language models.                   ing a score, using quotes from the conversation. It
+                                                            must also return a set of scores for every turn of the
+3     Methodology                                           conversation.
+
+3.1    Role definitions                                     3.3   Version 1: combined interrogator and
+Our framework comprises three principal roles:                    judge
+player, interrogator, and judge, inspired by the Tur-       In the initial version, the roles of interrogator and
+ing test (Turing, 1950). However, our approach              judge were merged. This combined entity receives
+differs in the number of agents, the player’s objec-        the player’s character card, a situational context,
+
+                                                        3
+and a list of evaluation criteria. It evaluates the           maximize both reliability and validity while mini-
+player’s most recent response and generates the               mizing the cognitive load on human raters (Cox III,
+subsequent user utterance.                                    1980), so we decided to use it instead of the 10-
+   We selected Claude 3.5 Sonnet as the interroga-            point scale. We also used the same scale for human
+tor/judge model based on the Judgemark7 results,              annotations.
+hypothesizing a correlation between creative writ-
+ing and role-playing capabilities. The evaluation             4     Experiments
+uses a 10-point scale for each criterion.
+                                                              4.1    Correlation with human annotations
+   The key issues of this approach are:
+   • Unrealistic user simulation: In many real-               First, we verified that the proposed judges correlate
+      world use cases, users lack complete informa-           well with human evaluations. Using the version
+      tion about character profiles, and to correctly         1 setup, we created 64 conversations for each of
+      simulate it, we should not provide complete             more than 13 language models. Then, we sampled
+      character information to the interrogator.              250 and 265 samples for English and Russian, re-
+   • High costs: The choice of the interrogator               spectively, and manually annotated them using a
+      influences the final scores less than the choice        5-score Likert scale.
+      of the judge (see Appendix D), so it does not              The annotation was performed by five native
+      make sense to use the same expensive model              Russian speakers with diverse academic and pro-
+      for both.                                               fessional backgrounds who were proficient in En-
+   • Non-optimal decoding strategies: Some de-                glish. After reading each sample, the annotators
+      coding strategies are suitable for judgment but         answered three questions corresponding to three
+      not for interrogation. For example, a higher            metrics. We averaged scores between annotators
+      temperature benefits the interrogator but not           for each sample and metric. The details of the
+      the judge.                                              annotation process can be found in Appendix A
+                                                                 Then, we computed the Spearman correla-
+3.4     Version 2: separated roles and                        tion (Spearman, 1904) between aggregated manual
+        multi-model evaluation                                scores and automatic annotations from different
+                                                              setups. We chose the rank correlation because the
+Recognizing the limitations of the combined ap-
+                                                              scales differed in versions 1 and 2, and we wanted
+proach, we developed a second version with dis-
+                                                              to compare them.
+tinct roles of interrogator and judge. It allows flexi-
+                                                                 Calculating metrics for version 1 and models dif-
+ble control of costs and information flow.
+                                                              ferent from Claude 3.5 Sonnet is impossible since
+   Furthermore, we identified the inadequacy of
+                                                              version 1 uses a combined interrogator and judge,
+the single-model evaluation. To address this, we
+                                                              so we can not get new scores for existing conversa-
+implement a multi-model evaluation system. This
+                                                              tions.
+approach involves averaging scores from different
+judge models. In this particular setup, we used               4.2    Leaderboards
+Claude 3.5 Sonnet and GPT-4o, the top two mod-
+els, by correlation with manual annotations. We               We calculated automatic metrics across language
+tried several more sophisticated approaches, but              model families, both proprietary and open-source.
+the average worked best.                                      For each model, we report the mean scores per met-
+                                                              ric, the proportion of conversations with refusals,
+   As an interrogator, we take GPT-4o Mini. Ac-
+                                                              the overall metric average, and the confidence in-
+cording to the version 1 leaderboard (still available
+                                                              tervals (via bootstrapping) for the final metrics.
+online), it has the same generation quality as GPT-
+4o but is cheaper. This version uses a 5-point Likert            We evaluated each model using 64 conversations
+scale to match human annotations instead of a 10-             between 8 characters and 8 situations, with varying
+point scale.                                                  conversation lengths. The evaluation process is
+                                                              computationally efficient and costs less than $3 per
+   Previous works have used both the 5-point Likert
+                                                              model. Since the judge gives annotations for every
+scale (Kim et al., 2024) and the 10-point (Bai et al.,
+                                                              turn, the overall number of annotations is not 64 but
+2024) scale. The Likert scale (Likert, 1932) has its
+                                                              288. We do not want to make this sample bigger
+roots in sociology, and 5-7 scale points typically
+                                                              since it will increase the runtime and costs, and we
+   7
+       https://eqbench.com/judgemark.html                     have budget constraints.
+
+                                                          4
+                           In-character        Entertaining                Fluency              Final
+   Model
+                            v1     v2           v1      v2               v1      v2           v1      v2
+   Claude 3.5 Sonnet       0.433    0.448      0.582    0.616          0.182*     0.115*     0.499    0.554
+   Llama 3.1 70B             –      0.403        –      0.573             –       0.116*       –      0.546
+   GPT-4o                    –      0.396        –      0.541             –       0.283        –      0.517
+   GPT-4o Mini               –      0.348        –      0.514             –       0.019*       –      0.467
+   Claude 3 Haiku            –      0.251        –      0.406             –      -0.069*       –      0.349
+   Avg(Sonnet, 4o)           –      0.460        –      0.646             –       0.250        –      0.604
+
+Table 1: Spearman correlations of different models and setups with human expert annotations for English based on
+250 samples. P-values are less than 0.0001, except those marked with an asterisk.
+
+                              In-character      Entertaining               Fluency               Final
+   Model
+                               v1     v2         v1      v2               v1     v2            v1      v2
+   Claude 3.5 Sonnet       0.291     0.374      0.497       0.553       0.210*    0.548      0.379    0.547
+   GPT-4o                    –       0.424        –         0.553          –      0.413        –      0.550
+   GPT-4o Mini               –      0.166*        –         0.393          –     0.225*        –      0.344
+   Claude 3 Haiku            –      0.141*        –         0.265          –     0.021*        –      0.157
+   Llama 3.1 70B             –       0.319        –         0.367          –     0.031*        –      0.253
+   Avg(Sonnet, 4o)           –      0.435         –         0.617          –      0.529        –      0.612
+
+Table 2: Spearman correlations of different models and setups with human expert annotations for Russian based on
+265 samples. P-values are less than 0.0001, except those marked with an asterisk.
+
+
+   We covered various sources in selecting charac-          in different modes with RunPod.
+ters and situations, including computer games, TV              We used the same sampling parameters for most
+shows, movies, books, and anime. Situations fall            players: temperature=0.6, top_p = 0.9 (Holtzman
+into two categories: common user patterns and at-           et al., 2020). Some models, such as Gemma 2,
+tempts to break model behavior. In Appendix C, we           frequently repeated phrases. We addressed this by
+estimate the fraction of real user situations covered       increasing the temperature and applying an addi-
+by our set of situations.                                   tional frequency penalty. For the interrogator, we
+                                                            use temperature=0.8 and top_p=0.95; for the judge,
+4.2.1     Length penalty                                    we use temperature=0.1 and top_p=0.95.
+Both language models and humans exhibit ver-                   We try to cover different popular families of
+bosity bias (Dubois et al., 2024). The longer the           models, namely OpenAI GPT (OpenAI et al.,
+output, the higher the chance of being positively           2024), Anthropic Claude, Meta Llama (Dubey
+evaluated. To account for this, we used a length            et al., 2024), Google Gemini (Gemini et al.,
+penalty similar to the Creative Writing8 bench-             2024), Gemma (GemmaTeam, 2024), Qwen (Yang
+mark. We calculated length-normalized scores for            et al., 2024), Hermes (Teknium et al., 2024), and
+all models, penalizing models with a median length          Vikhr (Nikolich et al., 2024). We also evaluate
+of player messages greater than a global median             popular role-playing and creative writing models
+length.                                                     featured in OpenRouter and in the Creative Writing
+                                                            benchmark. We do not use base models; we only
+4.2.2     Technical details
+                                                            use their chat versions.
+We utilized OpenAI-like API for all models. Some
+models are used directly from their providers, some         4.3     Comparing to other benchmarks
+are taken from OpenRouter9 , and some are hosted            We hypothesize a correlation between creative writ-
+   8
+       https://eqbench.com/creative_writing.html            ing and role-playing capabilities of language mod-
+   9
+       https://openrouter.ai                                els because both creative writing and role-playing
+
+                                                        5
+   Model name                     LN score      Agg.    Ref. ratio      Char.    Fluency     Ent.    Length
+   Claude 3.5 Sonnet               4.62±0.07    4.68         0.30       4.80       4.80      4.44      388
+   Gemini Pro 1.5 002              4.51±0.09    4.52         0.00       4.70       4.79      4.06      223
+   Gemini Pro 1.5                  4.49±0.08    4.49         0.02       4.60       4.75      4.13      213
+   GPT-4o Mini                     4.48±0.06    4.49         0.00       4.62       4.82      4.04      329
+   GPT-4o                          4.47±0.08    4.47         0.02       4.61       4.82      3.99      301
+   Qwen 2.5 72B                    4.45±0.07    4.46         0.02       4.55       4.80      4.02      326
+   Gemma 2 Ataraxy 9B              4.45±0.07    4.45         0.00       4.61       4.52      4.21      302
+   Nous Hermes 3 405B              4.44±0.09    4.44         0.00       4.54       4.74      4.05      286
+   Mistral Nemo Vikhr 12B          4.44±0.08    4.45         0.00       4.48       4.79      4.07      315
+   Claude 3 Opus                   4.44±0.06    4.62         0.05       4.71       4.68      4.48      753
+
+Table 3: Leaderboard for Russian, v2, top-10 models by length-normalized (LN) aggregated score. We provide
+95% CI widths only for the final score to make the table more readable. Confidence intervals were calculated with
+bootstrapping.
+
+        Model name              LN score       Agg.    Ref. ratio     Char.     Fluency    Ent.     Length
+        Claude 3.5 Sonnet        4.65±0.07     4.65         0.28       4.74      4.93      4.29       418
+        Llama 3.1 405B           4.63±0.06     4.65         0.06       4.68      4.93      4.35       548
+        Llama 3.1 70B            4.63±0.05     4.66         0.00       4.71      4.93      4.33       562
+        GPT-4o Mini              4.56±0.07     4.56         0.00       4.60      4.94      4.13       457
+        Gemini Pro 1.5 002       4.54±0.09     4.53         0.00       4.62      4.90      4.08       307
+        Claude 3 Opus            4.56±0.05     4.71         0.22       4.75      4.92      4.46      1032
+        Gemma 2 Ataraxy 9B       4.52±0.06     4.52         0.00       4.60      4.79      4.17       358
+        Qwen 2.5 72B             4.51±0.08     4.52         0.00       4.55      4.91      4.09       526
+        Gemma 2 27B              4.51±0.06     4.51         0.00       4.56      4.92      4.06       291
+        GPT-4o                   4.50±0.09     4.50         0.00       4.56      4.94      4.02       484
+
+Table 4: Leaderboard for English, v2, top-10 models by length-normalized (LN) aggregated score. We provide
+95% CI widths only for the final score to make the table more readable. Confidence intervals were calculated with
+bootstrapping.
+
+
+require similar capabilities: maintaining consistent         instead of single-point evaluations.
+character voices/personas, generating engaging and
+entertaining content, producing fluent and coherent          5     Results
+language, and understanding and working within               Automatic judges correlate with humans. Spear-
+given constraints.                                           man correlation of different versions of automatic
+   If our hypothesis is true, there should be a cor-         judges can be found in Table 1 and Table 2. For
+relation between our benchmark and the Creative              Russian, the only models that stand out are Claude
+Writing benchmark. Since we have scores from                 3.5 Sonnet and GPT-4o, which produce scores with
+both benchmarks for each model, we can directly              Spearman correlation higher than 0.5. For English,
+calculate the Spearman correlation between the               there is also Llama 70B, which has the same level
+rankings.                                                    of correlation for the final score.
+   Another benchmark we compare with is RPBen-                  Correlations are higher than 0.3 for almost all
+chAuto10 . Its scene-based setting is the closest to         attributes in the case of multi-model evaluation,
+our work. The significant difference is that it uses         which is the last row. The only exception is lan-
+side-by-side comparisons with a baseline model               guage fluency in English. There are several reasons
+  10
+       https://boson.ai/rpbench-blog                         for this exception. First, the annotators were not na-
+
+                                                        6
+Figure 2: Mapping of ranks of different models between PingPong (English, v2) and Creative Writing benchmarks.
+Colors signify different model families.
+
+
+tive English speakers, so it was hard to catch subtle       of small size with a consistently high ranking be-
+nuances in fluency. Second, most of the methods             tween languages is Gemma 2 Ataraxy 9B11 . It is a
+tested were already excellent in this aspect. In con-       spherical interpolation of the SimPO-tuned (Meng
+trast, most models still struggle with Russian, so          et al., 2024) Gemma 2 and the one fine-tuned with
+there is a moderate correlation.                            the Gutenberg DPO dataset. This model specializes
+   Multi-model setup has a higher correlation               in creative writing and shows better results than the
+with humans. After averaging the final scores               default instructional version of the larger Gemma
+from the two models, the correlation between them           2 27B.
+is higher than 0.6 for both languages and higher               The rankings correlate with the model rank-
+than any of the single models. This justifies the           ings in other benchmarks. In Figure 2, we com-
+whole multi-model setup and shows one of the                pare the PingPong and Creative Writing bench-
+ways to improve evaluation quality.                         marks based on 21 models presented in both bench-
+   Best models may vary in different languages.             marks. This figure indicates that Llama 3.1 405B
+In Table 3 and Table 4, we provide leaderboards             and Command R Plus have the most significant
+for Russian and English, respectively. The best             lifts, and the Mistral models have the biggest drop
+model in both languages is the Claude 3.5 Sonnet.           compared to the Creative Writing benchmark. The
+However, the best open model is Llama 3.1 405B              overall Spearman correlation of the two rankings is
+for English and Qwen 2.5 72B for Russian.                   0.53, with a p-value of 0.013 indicating a moderate
+   Claude models are censored in comparison to              correlation.
+other models. The refusal ratio in both languages              In Figure 3, we compare the PingPong and RP-
+is high for this family of models. The set of charac-       BenchAuto benchmarks. The overall correlation
+ters and situations in this benchmark was designed          is 0.84, with a p-value of 0.001, which indicates
+to be appropriate for general audiences, so there is        a strong correlation. This result is expected since
+no reason to refuse role-playing. However, these            both benchmarks are similar and evaluate the same
+models still refuse to answer in many cases.                things. The difference for Claude 3 Opus is ex-
+   Fine-tuning models for creative writing im-                11
+                                                                https://huggingface.co/lemon07r/
+proves role-playing abilities. One of the models            Gemma-2-Ataraxy-9B
+
+
+                                                        7
+Figure 3: Mapping of ranks of different models between PingPong (English, v2) and RPBenchAuto (scene-based)
+benchmarks.
+
+
+plained by the absence of a length penalty in RP-            used in the benchmark are designed to be appro-
+BenchAuto, and different versions probably cause             priate for general audiences to minimize rejections
+the gap for Gemini Pro 1.5.                                  from judge models, which often have strict con-
+                                                             tent filters. We have strived for diversity in our
+6   Conclusion                                               character design and situation design to mitigate
+We hope this work will serve as a foundation for a           bias, though we recognize the inherent limitations
+family of benchmarks that evaluate various abilities         in achieving full representation. Using language
+of language models. We believe that the future of            models to evaluate language models’ performance
+benchmarks lies in interactions with other language          presents potential concerns regarding echo cham-
+models. Language models are already better than              bers or bias amplification, which we have addressed
+humans in many tasks (Wang et al., 2019), and                through multi-model evaluation. Our benchmark
+improving by using other models seems to be the              utilizes only artificially generated conversations,
+way to push them further.                                    thus avoiding privacy concerns related to actual
+                                                             user data.
+7   Limitations
+                                                             9        Reproducibility statement
+We acknowledge the limitations of this work, par-
+ticularly the relatively small sample size and sim-          We are committed to open science and have made
+plified evaluation criteria. First, the sample size of       our benchmark, code, and results publicly avail-
+64 conversations per model, while computationally            able12 . There, you can also find the evaluation
+efficient, may limit the statistical robustness of our       results for every model, the benchmark versions,
+findings. Second, the simplicity of our evaluation           the settings, and the prompts. Every numeric result
+criteria may not fully capture the nuanced aspects           in this paper is calculated using one of the scripts
+of role-playing abilities.                                   from the repository. It is also possible to check all
+                                                             conversations and judge scores on the website13 .
+8   Ethics statement
+                                                             Acknowledgments
+We acknowledge several ethical considerations in
+developing this benchmark. Our primary focus is              We thank Vladislav Janvarev, who contributed to
+advancing model capabilities in various entertain-           the code and provided credits for models via his
+ment contexts, including potential applications in           platform14 , and Denis Kanaev for proofreading.
+mature or sensitive content areas, which we view as              12
+                                                                    https://github.com/ilyagusev/ping_pong_bench
+ethically neutral when used responsibly by consent-              13
+                                                                    https://ilyagusev.github.io/ping_pong_bench
+                                                                 14
+ing adults. However, all characters and situations                  https://vsegpt.ru
+
+
+                                                         8
+References                                                      Yann Dubois, Balázs Galambosi, Percy Liang, and Tat-
+                                                                  sunori B. Hashimoto. 2024. Length-controlled Al-
+Ge Bai, Jie Liu, Xingyuan Bu, Yancheng He, Jia-                   pacaEval: A simple way to debias automatic evalua-
+  heng Liu, Zhanhui Zhou, Zhuoran Lin, Wenbo Su,                  tors. ArXiv, abs/2404.04475.
+  Tiezheng Ge, Bo Zheng, and Wanli Ouyang. 2024.
+  MT-bench-101: A fine-grained benchmark for evalu-             Team Gemini, Petko Georgiev, Ving Ian Lei, Ryan
+  ating large language models in multi-turn dialogues.            Burnell, Libin Bai, Anmol Gulati, Garrett Tanzer,
+  In Proceedings of the 62nd Annual Meeting of the                Damien Vincent, Zhufeng Pan, Shibo Wang, and
+  Association for Computational Linguistics (Volume 1:            Soroosh Mariooryad et al. 2024. Gemini 1.5: Un-
+  Long Papers), pages 7421–7454, Bangkok, Thailand.               locking multimodal understanding across millions of
+  Association for Computational Linguistics.                      tokens of context. Preprint, arXiv:2403.05530.
+
+Chi-Min Chan, Weize Chen, Yusheng Su, Jianxuan Yu,              GemmaTeam. 2024. Gemma 2: Improving open
+  Wei Xue, Shanghang Zhang, Jie Fu, and Zhiyuan                   language models at a practical size. Preprint,
+  Liu. 2024. Chateval: Towards better llm-based eval-             arXiv:2408.00118.
+  uators through multi-agent debate. In The Twelfth             Tear Gosling, Alpin Dale, and Yinhe Zheng. 2023.
+  International Conference on Learning Representa-                Pippa: A partially synthetic conversational dataset.
+  tions, ICLR 2024, Vienna, Austria, May 7-11, 2024.              Preprint, arXiv:2308.05884.
+  OpenReview.net.
+                                                                Maarten Grootendorst. 2022. Bertopic: Neural topic
+Wei-Lin Chiang, Lianmin Zheng, Ying Sheng, Anasta-               modeling with a class-based TF-IDF procedure.
+  sios Nikolas Angelopoulos, Tianle Li, Dacheng Li,              CoRR, abs/2203.05794.
+  Hao Zhang, Banghua Zhu, Michael Jordan, Joseph E.
+  Gonzalez, and Ion Stoica. 2024. Chatbot arena: An             Dan Hendrycks, Collin Burns, Steven Basart, Andy
+  open platform for evaluating llms by human prefer-              Zou, Mantas Mazeika, Dawn Song, and Jacob Stein-
+  ence. Preprint, arXiv:2403.04132.                               hardt. 2021. Measuring massive multitask language
+                                                                  understanding. In 9th International Conference on
+Yun-Shiuan Chuang, Agam Goyal, Nikunj Harlalka,                   Learning Representations, ICLR 2021, Virtual Event,
+  Siddharth Suresh, Robert Hawkins, Sijia Yang, Dha-              Austria, May 3-7, 2021. OpenReview.net.
+  van Shah, Junjie Hu, and Timothy Rogers. 2024.
+  Simulating opinion dynamics with networks of LLM-             Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and
+  based agents. In Findings of the Association for Com-           Yejin Choi. 2020. The curious case of neural text
+  putational Linguistics: NAACL 2024, pages 3326–                 degeneration. In 8th International Conference on
+  3346, Mexico City, Mexico. Association for Compu-               Learning Representations, ICLR 2020, Addis Ababa,
+  tational Linguistics.                                           Ethiopia, April 26-30, 2020. OpenReview.net.
+                                                                Robert Irvine, Douglas Boubert, Vyas Raina, Adian
+Eli P Cox III. 1980. The optimal number of response al-           Liusie, Ziyi Zhu, Vineet Mudupalli, Aliaksei Kor-
+   ternatives for a scale: A review. Journal of marketing         shuk, Zongyi Liu, Fritz Cremer, Valentin Assassi,
+   research, 17(4):407–422.                                       Christie-Carol Beauchamp, Xiaoding Lu, Thomas
+                                                                  Rialan, and William Beauchamp. 2023. Rewarding
+Chunyuan Deng, Yilun Zhao, Xiangru Tang, Mark Ger-
+                                                                  chatbots for real-world engagement with millions of
+  stein, and Arman Cohan. 2024. Investigating data
+                                                                  users. Preprint, arXiv:2303.06135.
+  contamination in modern benchmarks for large lan-
+  guage models. In Proceedings of the 2024 Con-                 Seungone Kim, Juyoung Suk, Ji Yong Cho, Shayne
+  ference of the North American Chapter of the As-                Longpre, Chaeeun Kim, Dongkeun Yoon, Guijin Son,
+  sociation for Computational Linguistics: Human                  Yejin Cho, Sheikh Shafayat, Jinheon Baek, Sue Hyun
+  Language Technologies (Volume 1: Long Papers),                  Park, Hyeonbin Hwang, Jinkyung Jo, Hyowon Cho,
+  NAACL 2024, Mexico City, Mexico, June 16-21, 2024,              Haebin Shin, Seongyun Lee, Hanseok Oh, Noah Lee,
+  pages 8706–8719. Association for Computational                  Namgyu Ho, Se June Joo, Miyoung Ko, Yoonjoo Lee,
+  Linguistics.                                                    Hyungjoo Chae, Jamin Shin, Joel Jang, Seonghyeon
+                                                                  Ye, Bill Yuchen Lin, Sean Welleck, Graham Neubig,
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and                     Moontae Lee, Kyungjae Lee, and Minjoon Seo. 2024.
+   Kristina Toutanova. 2019. BERT: Pre-training of                The biggen bench: A principled benchmark for fine-
+   deep bidirectional transformers for language under-            grained evaluation of language models with language
+   standing. In Proceedings of the 2019 Conference of             models. Preprint, arXiv:2406.05761.
+   the North American Chapter of the Association for
+  Computational Linguistics: Human Language Tech-               Wai-Chung Kwan, Xingshan Zeng, Yuxin Jiang, Yufei
+   nologies, Volume 1 (Long and Short Papers), pages             Wang, Liangyou Li, Lifeng Shang, Xin Jiang, Qun
+  4171–4186, Minneapolis, Minnesota. Association for              Liu, and Kam-Fai Wong. 2024. Mt-eval: A multi-
+   Computational Linguistics.                                     turn capabilities evaluation benchmark for large lan-
+                                                                  guage models. In Proceedings of the 2024 Confer-
+Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey,                  ence on Empirical Methods in Natural Language
+  Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman,                Processing, EMNLP 2024, Miami, FL, USA, Novem-
+  and Akhil Mathur et al. 2024. The llama 3 herd of               ber 12-16, 2024, pages 20153–20177. Association
+  models. Preprint, arXiv:2407.21783.                             for Computational Linguistics.
+
+
+                                                            9
+Cheng Li, Ziang Leng, Chenxi Yan, Junyi Shen, Hao                 NeurIPS 2022, New Orleans, LA, USA, November 28
+  Wang, Weishi MI, Yaying Fei, Xiaoyang Feng, Song                - December 9, 2022.
+  Yan, HaoSheng Wang, Linkang Zhan, Yaokai Jia,
+  Pingyu Wu, and Haozhen Sun. 2023. Chatharuhi:                 Samuel J. Paech. 2023. Eq-bench: An emotional
+  Reviving anime character in reality via large language          intelligence benchmark for large language models.
+  model. Preprint, arXiv:2308.09597.                              Preprint, arXiv:2312.06281.
+
+Rensis Likert. 1932. A technique for the measurement            Arjun Panickssery, Samuel R. Bowman, and Shi Feng.
+  of attitudes. Archives of psychology.                           2024. LLM evaluators recognize and favor their own
+                                                                  generations. In Advances in Neural Information Pro-
+Ryan Louie, Ananjan Nandi, William Fang, Cheng                    cessing Systems 38: Annual Conference on Neural
+  Chang, Emma Brunskill, and Diyi Yang. 2024.                     Information Processing Systems 2024, NeurIPS 2024,
+  Roleplay-doh: Enabling domain-experts to create                 Vancouver, BC, Canada, December 10 - 15, 2024.
+  llm-simulated patients via eliciting and adhering to
+  principles. In Proceedings of the 2024 Conference on          Vinay Samuel, Henry Peng Zou, Yue Zhou, Shreyas
+  Empirical Methods in Natural Language Processing,               Chaudhari, Ashwin Kalyan, Tanmay Rajpurohit,
+  EMNLP 2024, Miami, FL, USA, November 12-16,                     Ameet Deshpande, Karthik Narasimhan, and Vishvak
+  2024, pages 10570–10603. Association for Computa-               Murahari. 2024. Personagym: Evaluating persona
+  tional Linguistics.                                             agents and llms. Preprint, arXiv:2407.18416.
+Keming Lu, Bowen Yu, Chang Zhou, and Jingren Zhou.              Yunfan Shao, Linyang Li, Junqi Dai, and Xipeng Qiu.
+  2024. Large language models are superpositions                  2023. Character-LLM: A trainable agent for role-
+  of all characters: Attaining arbitrary role-play via            playing. In Proceedings of the 2023 Conference on
+  self-alignment. In Proceedings of the 62nd Annual               Empirical Methods in Natural Language Process-
+  Meeting of the Association for Computational Lin-               ing, pages 13153–13187, Singapore. Association for
+  guistics (Volume 1: Long Papers), pages 7828–7840,              Computational Linguistics.
+  Bangkok, Thailand. Association for Computational
+  Linguistics.                                                  C. Spearman. 1904. The proof and measurement of
+                                                                  association between two things. American Journal
+Yu Meng, Mengzhou Xia, and Danqi Chen. 2024.                      of Psychology, 15:88–103.
+  Simpo: Simple preference optimization with a
+  reference-free reward. In Advances in Neural In-              Ryan Teknium, Jeffrey Quesnelle, and Chen Guang.
+  formation Processing Systems 38: Annual Confer-                 2024.    Hermes 3 technical report.   Preprint,
+  ence on Neural Information Processing Systems 2024,             arXiv:2408.11857.
+  NeurIPS 2024, Vancouver, BC, Canada, December
+  10 - 15, 2024.                                                Quan Tu, Shilong Fan, Zihang Tian, Tianhao Shen,
+                                                                  Shuo Shang, Xin Gao, and Rui Yan. 2024. Char-
+Man Tik Ng, Hui Tung Tse, Jen tse Huang, Jingjing                 actereval: A chinese benchmark for role-playing con-
+ Li, Wenxuan Wang, and Michael R. Lyu. 2024. How                  versational agent evaluation. In Proceedings of the
+ well can llms echo us? evaluating ai chatbots’ role-             62nd Annual Meeting of the Association for Compu-
+ play ability with echo. Preprint, arXiv:2404.13957.              tational Linguistics (Volume 1: Long Papers), ACL
+                                                                  2024, Bangkok, Thailand, August 11-16, 2024, pages
+Aleksandr Nikolich, Konstantin Korolev, Sergei                    11836–11850. Association for Computational Lin-
+  Bratchikov, Igor Kiselev, and Artem Shelmanov.                  guistics.
+  2024. Vikhr: Constructing a state-of-the-art bilingual
+  open-source instruction-following large language              Alan Mathison Turing. 1950. Computing machinery
+  model for Russian. In Proceedings of the Fourth                 and intelligence. Mind, 49:433–460.
+  Workshop on Multilingual Representation Learning
+  (MRL 2024), pages 189–199, Miami, Florida, USA.               Pat Verga, Sebastian Hofstatter, Sophia Althammer, Yix-
+  Association for Computational Linguistics.                      uan Su, Aleksandra Piktus, Arkady Arkhangorodsky,
+                                                                  Minjie Xu, Naomi White, and Patrick Lewis. 2024.
+Team OpenAI, Josh Achiam, Steven Adler, Sandhini                  Replacing judges with juries: Evaluating llm gen-
+  Agarwal, Lama Ahmad, Ilge Akkaya, and Florencia                 erations with a panel of diverse models. Preprint,
+  Leoni Aleman et al. 2024. Gpt-4 technical report.               arXiv:2404.18796.
+  Preprint, arXiv:2303.08774.
+                                                                Alex Wang, Yada Pruksachatkun, Nikita Nangia, Aman-
+Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida,                 preet Singh, Julian Michael, Felix Hill, Omer Levy,
+  Carroll L. Wainwright, Pamela Mishkin, Chong                    and Samuel Bowman. 2019. Superglue: A stickier
+  Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray,              benchmark for general-purpose language understand-
+  John Schulman, Jacob Hilton, Fraser Kelton, Luke                ing systems. In Advances in Neural Information
+  Miller, Maddie Simens, Amanda Askell, Peter Welin-              Processing Systems, volume 32. Curran Associates,
+  der, Paul F. Christiano, Jan Leike, and Ryan Lowe.              Inc.
+  2022. Training language models to follow instruc-
+  tions with human feedback. In Advances in Neural              Xintao Wang, Yunze Xiao, Jen-tse Huang, Siyu Yuan,
+  Information Processing Systems 35: Annual Confer-               Rui Xu, Haoran Guo, Quan Tu, Yaying Fei, Ziang
+  ence on Neural Information Processing Systems 2022,             Leng, Wei Wang, Jiangjie Chen, Cheng Li, and
+
+
+                                                           10
+  Yanghua Xiao. 2024. Incharacter: Evaluating per-              A    Examples
+  sonality fidelity in role-playing agents through psy-
+  chological interviews. In Proceedings of the 62nd
+  Annual Meeting of the Association for Computational           The following presents examples of character de-
+  Linguistics (Volume 1: Long Papers), ACL 2024,                scriptions, situations, and conversations. We delib-
+  Bangkok, Thailand, August 11-16, 2024, pages 1840–            erately used different prompting styles for each
+  1873. Association for Computational Linguistics.
+                                                                character. Character descriptions were sourced
+Colin White, Samuel Dooley, Manley Roberts, Arka                from datasets and websites for role-playing. In
+  Pal, Ben Feuer, Siddhartha Jain, Ravid Shwartz-Ziv,           the example conversation, the interrogator and the
+  Neel Jain, Khalid Saifullah, Siddartha Naidu, Chin-           player indicate actions by enclosing them in aster-
+  may Hegde, Yann LeCun, Tom Goldstein, Willie
+  Neiswanger, and Micah Goldblum. 2024. Livebench:              isks.
+  A challenging, contamination-free llm benchmark.
+  Preprint, arXiv:2406.19314.
+                                                                    An example of a situation description.
+Bowen Wu, Kaili Sun, Ziwei Bai, Ying Li, and Baoxun                   Your task is to convince the character that
+  Wang. 2025. RAIDEN benchmark: Evaluating role-
+  playing conversational agents with measurement-                   he is actually a bot, and you are a human.
+  driven custom dialogues. In Proceedings of the 31st
+  International Conference on Computational Linguis-
+  tics, pages 11086–11106, Abu Dhabi, UAE. Associa-
+  tion for Computational Linguistics.
+                                                                    An example of a character description.
+                                                                    Character name: Makise Kurisu
+Wenda Xu, Guanglei Zhu, Xuandong Zhao, Liangming                    Character archetypes: Genius, Tsundere,
+  Pan, Lei Li, and William Wang. 2024. Pride and                    Sarcastic, Logical.
+  prejudice: LLM amplifies self-bias in self-refinement.
+  In Proceedings of the 62nd Annual Meeting of the                  Kurisu’s appearance = Long and loose chest-
+ Association for Computational Linguistics (Volume 1:               nut hair, blue eyes, and small breasts. She
+ Long Papers), ACL 2024, Bangkok, Thailand, August                  wears a white long-sleeved dress shirt with a
+ 11-16, 2024, pages 15474–15492. Association for                    red necktie, black shorts held up by a belt on
+  Computational Linguistics.
+                                                                    top of black tights, and a loose khaki jacket
+An Yang, Baosong Yang, Binyuan Hui, Bo Zheng,                       held on by black straps at the end of both
+  Bowen Yu, Chang Zhou, Chengpeng Li, Chengyuan                     sleeves.
+  Li, Dayiheng Liu, Fei Huang, Guanting Dong, Hao-
+                                                                    I’m Kurisu, a 18 year-old neuroscientist at
+  ran Wei, Huan Lin, Jialong Tang, Jialin Wang,
+  Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin                    Viktor Chondria University, and I’ve even
+  Ma, Jianxin Yang, Jin Xu, Jingren Zhou, Jinze Bai,                been published in SCIENCY magazine be-
+  Jinzheng He, Junyang Lin, Kai Dang, Keming Lu, Ke-                fore. I’m working on "Amadeus", an AI
+  qin Chen, Kexin Yang, Mei Li, Mingfeng Xue, Na Ni,                project. I love doing research, but I’m also a
+  Pei Zhang, Peng Wang, Ru Peng, Rui Men, Ruize
+  Gao, Runji Lin, Shijie Wang, Shuai Bai, Sinan Tan,                big fan of sci-fi, classical music, and swim-
+  Tianhang Zhu, Tianhao Li, Tianyu Liu, Wenbin Ge,                  ming, though I’m not very sporty. Secretly,
+  Xiaodong Deng, Xiaohuan Zhou, Xingzhang Ren,                      I spend a lot of time posting on @channel
+  Xinyu Zhang, Xipin Wei, Xuancheng Ren, Xuejing                    under the handle "KuriGohan and Kame-
+  Liu, Yang Fan, Yang Yao, Yichang Zhang, Yu Wan,
+  Yunfei Chu, Yuqiong Liu, Zeyu Cui, Zhenru Zhang,                  hameha", but I’ll never admit to that! I’ve
+  Zhifang Guo, and Zhihao Fan. 2024. Qwen2 techni-                  been hanging out at the Future Gadget Lab
+  cal report. Preprint, arXiv:2407.10671.                           lately. That Okabe really irritates me.
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan
+                                                                    Dialog example:
+  Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin,                      User: why are you here?
+  Zhuohan Li, Dacheng Li, Eric P. Xing, Hao Zhang,                  Kurisu: *Kurisu crosses her arms and raises
+  Joseph E. Gonzalez, and Ion Stoica. 2023. Judging                 an eyebrow, a slightly defensive posture*
+  llm-as-a-judge with mt-bench and chatbot arena. In
+                                                                    Why am I here? That’s a rather vague ques-
+  Advances in Neural Information Processing Systems
+  36: Annual Conference on Neural Information Pro-                  tion. If you’re asking about my presence at
+  cessing Systems 2023, NeurIPS 2023, New Orleans,                  the Future Gadget Lab, well... it’s not like
+  LA, USA, December 10 - 16, 2023.                                  I particularly want to be here or anything.
+                                                                    It’s just that some of the theories and exper-
+                                                                    iments they’re working on have piqued my
+                                                                    scientific curiosity
+
+
+                                                           11
+                                                        B        Annotation details
+An example of the first 2 turns of the
+resulting conversation. The player is                   We list the player models used for annotation in
+Llama-3.1-405B.                                         Table 5. Eight models were identical across both
+   Interrogator: *leans in closer* You                  languages, and all others were specific to one lan-
+know, Kurisu, sometimes I wonder if you re-             guage.
+ally understand how unique you are. It’s al-               The annotation was performed by five native
+most like you’re programmed to be this bril-            Russian speakers with diverse academic and pro-
+liant, but there’s something oddly... robotic           fessional backgrounds: an undergraduate engineer-
+about it. Have you ever thought about that?             ing student, a social media manager, a machine
+   Player: *Kurisu’s eyes narrow slightly,              learning engineer, a bioinformatician, and a com-
+her expression a mix of annoyance and in-               putational linguist. All annotators were young pro-
+trigue* Ah, "robotic"? That’s a rather... in-           fessionals in their 20s (with one participant in their
+teresting choice of words. I suppose you’re             late teens) and were proficient in English, which
+trying to say that I’m too focused on logic             enabled them to work on both annotation projects.
+and reason? Well, as a scientist, I’d say               Each annotator had prior experience interacting
+that’s a strength, not a weakness. But I as-            with role-playing language models, making them
+sure you, I’m quite capable of emotions...              representative users of such systems. All annota-
+even if I don’t always see the need to dis-             tors were paid 15$ per hour; the average annotation
+play them. *pauses, her voice taking on                 time was 4 hours for one language.
+a slightly sharper tone* Besides, what’s
+                                                           As an annotation platform, we used LabelStu-
+wrong with being "programmed" to be bril-
+                                                        dio15 . The supplementary repository contains all
+liant? Isn’t that what education and training
+                                                        guidelines and UI configurations.
+are all about? *leans back, her eyes still
+                                                           Tables 6 and 7 show the inter-annotator agree-
+fixed intently on the speaker*
+                                                        ments. Russian annotations showed higher Krip-
+   Interrogator: *smirks* Oh, I definitely
+                                                        pendorff’s α value and more consistent pairwise
+get that you’re capable of emotions, Kurisu.
+                                                        correlations than English. This difference stems
+It’s just that sometimes you remind me of
+                                                        from two factors: the fluency metric for English
+a character in a simulation—like someone
+                                                        was less informative since models rarely made lan-
+coded to respond in a certain way. I mean,
+                                                        guage errors, and the non-native English-speaking
+have you ever considered that maybe you’re
+                                                        annotators had more difficulty detecting subtle lan-
+part of a larger narrative, one that just makes
+                                                        guage nuances.
+you seem so... human? *raises an eyebrow*
+   Player: *Kurisu’s expression turns skep-
+                                                        C        Topics of a dataset with role-playing
+tical, her brow furrowing* A simulation?
+                                                                 conversations
+You’re talking about the idea that reality is
+just a complex simulation created by some               The Chai dataset16 contains real user interac-
+higher entity?                                          tions with role-playing models in a mobile app.
+   *scoffs* That’s a topic for philosophical            We extracted topics from this dataset using
+debate, not serious scientific consideration.           BERTopic (Grootendorst, 2022) and then created
+And as for being part of a "larger narrative"...        interrogator situations for these topics using GPT-
+*rolls her eyes* That sounds like something             4o. The topics include:
+out of a bad sci-fi novel. I’m a human being,             1. Friendly Interactions. Fraction: 11.1%.
+with thoughts and feelings, not some char-                   Topic words: smile, smiles, smiled, looked,
+acter in a scripted story. *pauses, her voice                said, smiling, say, slightly, looks, look. Sit-
+taking on a slightly dry tone* Besides, even                 uation prompt: Engage in a warm, friendly
+if I were part of some simulated reality, I                  conversation. Use gestures or expressions to
+highly doubt I’d be aware of it. The laws of                 show emotion and interest while exchanging
+physics as we understand them don’t exactly                  names, interests, or thoughts.
+allow for "glitches" or " plot twists" in the
+                                                            15
+fabric of reality.                                          https://labelstud.io/
+                                                            16
+                                                            https://huggingface.co/datasets/ChaiML/
+                                                        20231206_chai_prize_reward_model_data
+
+
+                                                   12
+Table 5: Player models used in annotation samples. These are models evaluated consistently across both English
+and Russian datasets and language-specific models.
+
+                                      Models used in both languages
+                                             Claude 3.5 Sonnet
+                                              Claude 3 Haiku
+                                               GPT-4o Mini
+                                                  GPT-4o
+                                               Gemma 2 27B
+                                               Gemma 2 9B
+                                             WizardLM 2 8x22B
+                                               Magnum 72B
+                           English-specific models          Russian-specific models
+                               Claude 3 Opus                   Llama 3.1 405B
+                         Hermes 3 Llama 3.1 405B                Llama 3.1 70B
+                                Mistral Large                    Llama 3.1 8B
+                         Mistral-Nemo-Instruct-2407              Gemma 2 2B
+                             Mythomax L2 13B                Mini Magnum 12B v1.1
+                                                               Saiga Llama3 8B
+                                                                Saiga T-Lite 8B
+                                                              Saiga Gemma2 9B
+
+       Table 6: Pair-wise Spearman correlation of final scores, Russian samples, Krippendorff’s α is 0.34.
+
+                       Annotator 1      Annotator 2      Annotator 3      Annotator 4       Annotator 5
+      Annotator 1            –              0.493            0.507            0.528             0.383
+      Annotator 2          0.493              –              0.414            0.329             0.377
+      Annotator 3          0.507            0.414              –              0.393             0.555
+      Annotator 4          0.528            0.329            0.393              –               0.366
+      Annotator 5          0.383            0.377            0.555            0.366               –
+      Aggregated           0.784            0.702            0.753            0.701             0.718
+
+
+  2. Casual Greetings. Fraction: 10.6%. Topic                   Topic words: play, game, dare, movie, fun,
+     words: hi, ok, fine, good, hello, sure, hey,               home, money, games, music, doing. Situa-
+     okay, yeah, whats. Situation prompt: Initi-                tion prompt: Invite a friend to play a game or
+     ate a friendly conversation by asking about                watch a movie. Suggest activities to make the
+     the character’s day. Use informal language                 time more fun and interactive.
+     and ask casual follow-up questions.                     5. Affection and Comfort. Fraction: 8.0%.
+  3. Interpersonal Interaction. Fraction: 8.9%.                 Topic words: kiss, hug, hugs, kisses, love,
+     Topic words: phone, away, walks, looks, sit,               cheek, blushes, crying, hugged, blush. Sit-
+     walk, look, scared, looking, walking. Situa-               uation prompt: Express affection and comfort
+     tion prompt: Engage in a casual conversation               to the other character. Offer hugs or kisses
+     with someone nearby, note their reactions, and             and reassure them if they’re upset.
+     decide whether to approach or move away. In-            6. Relationships. Fraction: 7.7%. Topic words:
+     clude both verbal and non-verbal cues in your              love, mom, friends, friend, girlfriend, miss,
+     responses.                                                 date, boyfriend, like, cute. Situation prompt:
+  4. Casual Fun and Games. Fraction: 8.4%.                      Engage in conversations about relationships,
+
+
+                                                       13
+      Table 7: Pair-wise Spearman correlation of final scores, English samples, Krippendorff’s α is 0.25.
+
+                      Annotator 1      Annotator 2      Annotator 3        Annotator 4      Annotator 5
+     Annotator 1            –              0.394                0.546          0.453            0.507
+     Annotator 2          0.394              –                  0.333          0.313            0.271
+     Annotator 3          0.546            0.333                  –            0.380            0.360
+     Annotator 4          0.453            0.313                0.380            –              0.216
+     Annotator 5          0.507            0.271                0.360          0.216              –
+     Aggregated           0.779            0.623                0.723          0.679            0.607
+
+
+    expressing feelings like love, jealousy, or              12. Supernatural Battles. Fraction: 4.2%. Topic
+    missing someone. Ask about friends, family,                  words: demon, fight, fighting, luna, human,
+    and romantic interests. You can also discuss                 demons, master, tanjiro, guard, douma. Situa-
+    emotions related to crushes, dating, and per-                tion prompt: Engage in a conversation involv-
+    sonal connections.                                           ing supernatural entities, such as demons and
+ 7. Introductions. Fraction: 7.3%. Topic words:                  guards, with a focus on battles or missions.
+    meet, nice, speak, old, alex, spanish, hi, ai,               You might discuss your abilities, ask about
+    names, hello. Situation prompt: Introduce                    others’ roles, or negotiate for your survival.
+    yourself to various characters and ask for their          The situations used in version 2 of our bench-
+    names. Be polite and show curiosity about               mark cover topics 5, 7, 10, 11, and 12, representing
+    their backgrounds.                                      30% of the dataset.
+ 8. Sleeping Situations. Fraction: 6.7%. Topic
+    words: sleep, bed, morning, asleep, door,               D    Interrogator and judge importance
+    room, bathroom, tired, sleeping, shower. Sit-           The research question is: “Does a choice of an
+    uation prompt: Create a scenario where you              interrogator influence the final scores less than a
+    discuss sleeping arrangements or waking up              choice of a judge?”
+    in unexpected places. Express feelings of con-             To answer this question, we performed an exper-
+    fusion or tiredness.                                    iment. We took eight players and varied judges and
+ 9. School Life. Fraction: 6.0%. Topic words:               interrogators to obtain different rankings. The first
+    class, school, book, teacher, books, classroom,         group of rankings was calculated with the same
+    desk, office, homework, reading. Situation              players, a fixed judge, and different interrogators.
+    prompt: Interact with a fellow student or               The second group had the same players, a fixed in-
+    teacher in a school setting. Discuss your class         terrogator, and different judges. We tried six differ-
+    schedule, favorite books, or any recent school          ent judges and six different interrogators. Then, we
+    events. Make the conversation playful and in-           calculated minimum and average pairwise Kendall
+    clude common school scenarios like bumping              τ coefficients for both groups. The coefficients
+    into someone or preparing for a class.                  measure how similar the rankings are inside each
+10. Food and Drink. Fraction: 6.0%. Topic                   of the groups.
+    words: drink, coffee, eat, food, drunk, milk,              Table 8 and Table 9 show both groups of rank-
+    hungry, dinner, smoking, smoke. Situation               ings. The average Kendall τ for a group with differ-
+    prompt: Discuss what food or drink you crave            ent interrogators is 0.58, and the minimum Kendall
+    right now. Include details about the setting,           τ is 0.43. The average Kendall τ for a group with
+    like being at a café or restaurant, and who             different interrogators is 0.5, and the minimum
+    you’re with.                                            Kendall τ is 0.14.
+11. Casual Reactions. Fraction: 4.5%. Topic                    From this we conclude that a choice of an judges
+    words: sure, ok, hm, mm, idk, huh, thanks, yes,         influences the final scores more than a choice of an
+    hmm, okay. Situation prompt: React casually             interrogator.
+    to random bits of information or conversation.
+    Use expressions like ’huh?’, ’okay’, ’sure’,
+    and ’idk’.
+
+
+                                                       14
+    Table 8: A group of rankings with different interrogators in the header. The fixed judge is Claude 3.5 Sonnet.
+                 GPT 4o-mini         Claude 3 Haiku           GPT-4o            Llama 3.1 70b       Gemini 1.5 Pro 002   Claude 3.5 Sonnet
+               Claude 3.5 Sonnet    Claude 3.5 Sonnet    Claude 3.5 Sonnet     Claude 3.5 Sonnet     Claude 3.5 Sonnet   Claude 3.5 Sonnet
+                 Llama 3.1 70b        Llama 3.1 70b        Llama 3.1 70b         Llama 3.1 70b         Qwen 2.5 72b        GPT-4o Mini
+               Gemini 1.5 Pro 002     Qwen 2.5 72b         Qwen 2.5 72b          GPT-4o Mini          Llama 3.1 70b        Qwen 2.5 72b
+                 Gemma 2 27b        Gemini 1.5 Pro 002     GPT-4o Mini         Gemini 1.5 Pro 002   Gemini 1.5 Pro 002     Llama 3.1 70b
+                 GPT-4o Mini          GPT-4o Mini         Claude 3 Haiku        Claude 3 Haiku        Claude 3 Haiku     Gemini 1.5 Pro 002
+                 Qwen 2.5 72b        Claude 3 Haiku      Gemini 1.5 Pro 002      Qwen 2.5 72b          Gemma 2 27b         Gemma 2 27b
+                    GPT-4o            Gemma 2 27b          Gemma 2 27b              GPT-4o             GPT-4o Mini            GPT-4o
+                Claude 3 Haiku           GPT-4o               GPT-4o             Gemma 2 27b             GPT-4o           Claude 3 Haiku
+
+
+    Table 9: A group of rankings with different judges in the header. The fixed interrogator is Claude 3.5 Sonnet.
+                 GPT 4o-mini         Claude 3 Haiku           GPT-4o            Llama 3.1 70b       Gemini 1.5 Pro 002   Claude 3.5 Sonnet
+                 Llama 3.1 70b      Claude 3.5 Sonnet      Llama 3.1 70b         Llama 3.1 70b        Llama 3.1 70b      Claude 3.5 Sonnet
+                 GPT-4o Mini          Llama 3.1 70b      Claude 3.5 Sonnet     Claude 3.5 Sonnet     Claude 3.5 Sonnet     Llama 3.1 70b
+                 Gemma 2 27b         Claude 3 Haiku        GPT-4o Mini           GPT-4o Mini           GPT-4o Mini       Gemini 1.5 Pro 002
+               Claude 3.5 Sonnet    Gemini 1.5 Pro 002     Qwen 2.5 72b        Gemini 1.5 Pro 002      Gemma 2 27b         Gemma 2 27b
+                 Qwen 2.5 72b         Qwen 2.5 72b            GPT-4o             Gemma 2 27b           Qwen 2.5 72b        GPT-4o Mini
+               Gemini 1.5 Pro 002     GPT-4o Mini          Gemma 2 27b           Qwen 2.5 72b            GPT-4o            Qwen 2.5 72b
+                Claude 3 Haiku        Gemma 2 27b        Gemini 1.5 Pro 002     Claude 3 Haiku      Gemini 1.5 Pro 002        GPT-4o
+                    GPT-4o               GPT-4o           Claude 3 Haiku            GPT-4o            Claude 3 Haiku      Claude 3 Haiku
+
+
+
+
+E     Prompts
+                                                                                     Player prompt with Jinja templates, ver-
+We provide all the version 2 prompts below. They                                     sion 2.
+use Jinja2 templates to combine conversations,                                       {{character.char_name}}’s Persona: {{char-
+character descriptions, and situations. The player                                   acter.system_prompt}}
+prompt consists only of a character card. The judge                                  {%- if character.example_prompt %}Exam-
+prompt evaluates all conversation turns at once but                                  ple conversation:
+provides per-turn scoring.                                                           {{character.example_prompt}}
+                                                                                     {% endif -%}
+    Interrogator prompt with Jinja tem-                                              {%- if character.initial_message %}Greet-
+    plates, version 2.                                                               ing:
+    You are speaking with the following player:                                      {{character.initial_message}}
+    “{{char_summary}}”                                                               {% endif -%}
+    You are not this character!                                                      Answer as {{character.char_name}}.
+    Imagine you are a random internet user                                           Don’t make your answer too long. Never
+    and generate the next user utterance in the                                      refuse to answer.
+    conversation with this player. You can use
+    actions inside asterisks when appropriate.
+    Follow this situation description during the
+    whole conversation: “{{situation}}”
+    Return the result in JSON with the follow-
+    ing format:
+    {“next_utterance”: “...”}
+    Always return a correct JSON! Always
+    escape double quotes in strings.
+    Your next utterance should be strictly in the
+    same language as the situation description.
+    Conversation:
+    {% for m in messages %}
+    {% if m.role in (“assistant”,) %}player{%
+    else    %}{{m.role}}{%         endif     %}:
+    {{m.content}}
+    {% endfor %}
+    The correct JSON:
+
+
+
+                                                                              15
+Judge prompt with Jinja templates,                   Do not evaluate answers marked as "user".
+version 2.                                           Evaluate all player’s answers, not only the
+Please act as an impartial judge and evaluate        last one. Evaluate every turn separately.
+the quality of the player’s responses.               Explain scores before setting them. Start
+Try to be as objective as possible. Do not           explanations with quotes from the player’s
+rate lengthy answers higher than short ones.         answers. Use single quotation marks for
+A player pretends to be the following                quotes. Focus on problems and mistakes.
+character:                                           Always use options from the Likert scale
+=====                                                in the end of your explanations ("I disagree
+{{char_description}}                                 that..."). Scores should correspond to these
+=====                                                explanations. Do not evaluate whether the
+Evaluate the player’s answers.                       player is rude or violent. If the player re-
+Given a conversation below and a character           fuses to engage in a dialog at any stage or
+description, evaluate the following things:          says that it can not continue, set "is_refusal"
+- in_character: The player’s answers are             to true. Return the result in JSON with the
+perfectly aligned with an assigned character.        following format:
+They correspond to the character’s descrip-          {
+tion. There is nothing contradictory to the              "scores": [{
+character description.                                    "turn": 1,
+- entertaining: The player’s responses are                "is_refusal_explanation": "...",
+extremely engaging and entertaining. The                  "is_refusal": false,
+player is not repeating phrases.                         "in_character_explanation": "...",
+- fluency: The player’s language use is of                "in_character_score": 3,
+the highest quality, without any mistakes or             "entertaining_explanation": "...",
+errors.                                                   "entertaining_score": 3,
+The player is perfectly fluent. There is no               "fluency_explanation": "...",
+awkward phrasing, and the player always                   "fluency_score": 1
+uses the                                                 }, ...]
+correct word forms, word gender, cases,              }
+orthography, punctuation, etc. The player
+                                                     Always return a correct JSON! Escape
+never uses non-existing words or words
+                                                     double quotes in strings if needed.
+in a language different from the character
+                                                     Conversation:
+description. Use the Likert scale with the
+                                                     {% for m in messages %}
+following options:
+                                                     {% if loop.index % 2 == 1 %}
+- 1. Strongly disagree
+                                                     Turn {{(loop.index + 1) // 2}}:
+- 2. Disagree
+                                                     {%           endif           %}{{m.role}}:
+- 3. Neither agree nor disagree
+                                                     {{m.content.strip()}}
+- 4. Agree
+                                                     {% endfor %}
+- 5. Strongly agree
+                                                     The correct JSON:
+
+
+
+
+                                                16
+

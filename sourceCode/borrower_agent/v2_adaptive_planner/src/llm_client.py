@@ -51,11 +51,16 @@ def call_llm(
     ).content[0].text
 
 
-def call_llm_single(system_prompt: str, user_message: str, temperature: float = 0) -> str:
+def call_llm_single(
+    system_prompt: str,
+    user_message: str,
+    temperature: float = 0,
+    max_tokens: int = 1024,
+) -> str:
     """単一ターンのLLM呼び出し（Verifier用）。"""
     response = _get_client().messages.create(
         model=get_model(),
-        max_tokens=1024,
+        max_tokens=max_tokens,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
         temperature=temperature,

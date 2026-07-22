@@ -1,0 +1,539 @@
+                                               Generating Persona Consistent Dialogues by Exploiting Natural Language
+                                                                             Inference
+
+                                                                         Haoyu Song, Wei-Nan Zhang, Jingwen Hu, Ting Liu
+                                                                          Research Center for Social Computing and Information Retrieval
+                                                                           Harbin Institute of Technology, Heilongjiang Province, China
+                                                                                   { hysong, wnzhang, jwhu, tliu }@ir.hit.edu.cn
+
+
+
+
+arXiv:1911.05889v4 [cs.AI] 22 Mar 2021
+                                                                    Abstract                                      Persona ( for Dialogue Agent )
+                                           Consistency is one of the major challenges faced by dialogue              • I drive a 2015 Honda-CIVIC
+                                           agents. A human-like dialogue agent should not only respond               • My cat’s name is Tom
+                                           naturally, but also maintain a consistent persona. In this pa-         Dialogues
+                                           per, we exploit the advantages of natural language inference
+                                           (NLI) technique to address the issue of generating persona                • Input 1: I spend as much to park as to live, you ?
+                                           consistent dialogues. Different from existing work that re-               • Response 1: Well, I don’t have a car. Bike instead lol.
+                                           ranks the retrieved responses through an NLI model, we cast                            Natural but Contradictory to the persona
+                                           the task as a reinforcement learning problem and propose to               • Input 2: Do you have any pets ?
+                                           exploit the NLI signals from response-persona pairs as re-                • Response 2: Pets? I've a cat named Tom.
+                                           wards for the process of dialogue generation. Specifically,
+                                           our generator employs an attention-based encoder-decoder to                           Natural and Consistent with the persona
+                                           generate persona-based responses. Our evaluator consists of
+                                           two components: an adversarially trained naturalness mod-          Figure 1: Naturalness is an important attribute of dialogue
+                                           ule and an NLI based consistency module. Moreover, we              responses. In persona-based dialogue generation, the consis-
+                                           use another well-performed NLI model in the evaluation of          tency with persona is another essential factor to consider. An
+                                           persona-consistency. Experimental results on both human and
+                                                                                                              ideal response should be not only natural but also consistent
+                                           automatic metrics, including the model-based consistency
+                                           evaluation, demonstrate that the proposed approach outper-         with the persona.
+                                           forms strong generative baselines, especially in the persona-
+                                           consistency of generated responses. Our codes are available
+                                           at: https://github.com/songhaoyu/RCDG.                                Natural Language Inference (NLI) learns a mapping be-
+                                                                                                              tween a sentence pair and an entailment category. Taking
+                                                                 Introduction                                 advantages of the NLI techniques in natural language un-
+                                                                                                              derstanding (Bowman et al. 2015), the detection of persona-
+                                         Despite the recent success of dialogue generation in open-           consistency can be modeled as an NLI task (Welleck et al.
+                                         domain by training from large volumes of human-to-human              2019), which assigns a label of entailment, neutral, or con-
+                                         interaction data (Shang, Lu, and Li 2015; Serban et al. 2016;        tradiction to an “(utterance, persona)” pair. Meanwhile, ex-
+                                         Li et al. 2017; Zhu et al. 2019), conversing to a dialogue           isting persona-based dialogue models are limited by their
+                                         agent is still in its infancy, and one major issue for these data-   loss functions. For these deep generative models, it is diffi-
+                                         driven models is the lack of a consistent persona (Vinyals           cult to design a differentiable training objective to exploit the
+                                         and Le 2015; Li et al. 2016a; Zhang et al. 2018; Song et al.         NLI based consistency detection method. Besides design-
+                                         2019a). Figure 1 shows how consistency affects the quality           ing a differentiable training objective, reinforcement learn-
+                                         of dialogues.                                                        ing (RL) offers another solution to this problem, which back-
+                                            One practical approach to increase the consistency of a           propagates the reward signals to guide the generator.
+                                         dialogue agent is to explicitly define a set of personal facts          In this paper, different from re-ranking the archived re-
+                                         describing the characters (the personas) of the agent and            sponses (Welleck et al. 2019), we take advantages of the NLI
+                                         learn to generate responses that reflect the predefined per-         techniques in guiding the generation of persona consistent
+                                         sonas (Zhang et al. 2018). However, due to the lack of con-          dialogues. Specifically, we propose a system trained using
+                                         sistency modeling and the maximum-likelihood estimation              reinforcement learning. Our model has one evaluator with
+                                         (MLE) objective function, these persona-based models still           two modules and one generator. The evaluator consists of a
+                                         face the inconsistency issue (Welleck et al. 2019).                  naturalness module and a consistency module. The natural-
+                                         Copyright © 2020, Association for the Advancement of Artificial      ness module is trained adversarially for higher accuracy. As
+                                         Intelligence (www.aaai.org). All rights reserved.                    for the consistency module, we use an NLI styled classifier
+to detect the consistency between responses and personas.        generative models are not limited to the given dataset. More-
+We further employ two different NLI classifiers in our exper-    over, exploiting consistency detection method in deep gen-
+iments to investigate the role of NLI signals. The generator,    erative dialogue models has not been explored yet.
+which is a persona-based attentive Seq2Seq model (Zhang
+et al. 2018), takes message and persona texts as input and       Reinforcement Learning In recent years, deep reinforce-
+generates responses that reflect the persona texts. Note that    ment learning has been widely applied in natural language
+more advanced generative models such as MASS (Song et            processing, such as machine translation (Wu et al. 2018), vi-
+al. 2019b) can also be exploited as our generator.               sual question generation (Fan et al. 2018), paraphrase gener-
+   We summarize the contributions as follows:                    ation (Li et al. 2018), anaphora resolution (Yin et al. 2018)
+                                                                 etc. The advantage of reinforcement learning lies in that it
+• We propose an RL framework for persona consistent di-          does not need a differentiable objective function. In open-
+  alogue generation, thus addressing the challenge of train-     domain dialogue generation, Li et al. (2016b) manually de-
+  ing objective need to be differentiable in persona-based       fined three rewards and use reinforcement learning to train
+  dialogue models.                                               the dialogue agent. Further, Li et al. (2017) apply adversar-
+• To the best of our knowledge, this is the first work that      ial learning method (Yu et al. 2017) for dialogue generation
+  exploits NLI techniques to enhance the generation of per-      and propose the REGS model. This model shows its strength
+  sona consistent dialogues.                                     in the naturalness of generated responses. However, natural
+                                                                 responses can also be inconsistent, especially in the persona-
+• Evaluations are carried out both quantitatively and qual-      based scenario (as shown in Figure 1).
+  itatively, and experimental results show that our model
+  outperforms strong baselines, especially in terms of                             Proposed Approach
+  persona-consistency.
+                                                                 Problem Definition
+                     Related Work                                Our goal is to learn a generative model G to deliver per-
+                                                                 sona consistent dialogues, which can be formally defined
+Persona-based Dialogue Generation In open-domain di-             as: given an input message X, and a set of persona texts
+alogue generation, Zhang et al. (2018) initiate a new line       P = {P1 , P2 , ..., Pn }, to generate a response Ŷ , based
+of research (the persona-based dialogue) by introducing the      on both input message X and the persona text set P , i.e.,
+Persona-Chat dataset, with explicit persona information in
+each dialogue session. They further propose two generative       G(X, P ) = Ŷ . Moreover, Ŷ should be consistent with the
+models, persona-Seq2Seq and Generative Profile Memory            persona text set P , which means the NLI category between
+Network, to incorporate persona texts into responses. In the     Ŷ and any Pi should be entailment or neutral, rather than
+persona-based scenario, a model is associated with a per-        contradiction, i.e., ∀Pi ∈ P , NLI (Ŷ , Pi ) ∈ {E, N}, where
+sona, which is composed of several persona texts (See the        E and N denote entailment and neutral respectively.
+top two sentences in Figure 1). A response is then gener-
+ated using both the input message and the assigned per-          Evaluator
+sona. Following this line, Yavuz et al. (2018) apply the         The proposed reinforcement learning framework consists of
+DeepCopy model in the persona-based dialogue generation.         two components: an evaluator and a sequence generator, as
+These works have laid a solid foundation for this area.          illustrated in Figure 2.
+Through attention or copy, generated responses can reflect          As forementioned, an ideal response should be not only
+the predefined persona. However, the loss functions in these     natural but also consistent with personas. Therefore, we con-
+models do not take the consistency issue into account, and       sider these two attributes of responses while training the
+inconsistency is still a problem to be addressed in the exist-   generator. More concretely, whether a response is as natu-
+ing approaches (Welleck et al. 2019).                            ral as from human (natural or unnatural) and whether a re-
+                                                                 sponse is consistent with predefined personas (entailment,
+Natural Language Inference The task of Natural Lan-
+                                                                 neutral or contradiction). These two attributes are indepen-
+guage Inference (NLI) is to learn a function fN LI (p, h) →
+                                                                 dent of each other, and an ideal response Y ∗ should satisfy:
+{E, N, C}, where p and h denote premise and hypothesis re-
+spectively. The output E, N and C represent entailment, neu-                   Y ∗ ∈ N atural ∩ Entailment.                 (1)
+tral and contradiction between the premise and hypothesis.
+Since the release of large scale corpus SNLI (Bowman et al.      The key idea is to encourage the generator to generate re-
+2015), deep neural network methods have made promising           sponses that satisfy Formula (1). We use the policy gradient
+progress (Chen et al. 2017; Gong, Luo, and Zhang 2018;           method in reinforcement learning to train the generator. We
+Kim et al. 2019). Welleck et al. (2019) model the detec-         will discuss this in detail later.
+tion of dialogue consistency as an NLI task and propose the         Notice that our evaluator consists of two modules, rather
+DNLI (Dialogue NLI) dataset, which is similar to the SNLI        than one jointly trained module, which is due to the differ-
+but in the domain of persona-based dialogue. Further, they       ence between the two attributes. For the naturalness module,
+verify the effectiveness of using NLI model to re-rank can-      it can benefit from the adversarial training scheme (Yu et al.
+didate responses in a retrieval-based dialogue model. Com-       2017; Li et al. 2017), as naturality is reflected in the train-
+pared with the retrieval-based model, the responses from         ing data. Naturalness as a submodule in the evaluator can
+                                                                                                Entailment                   Persona 1: I like country music
+                                                          I hate country music
+                                                                                  Reward 2       Neutral
+                                                                                                                             Persona 2: I enjoy singers like Taylor Swift
+                                                            I like Taylor Swift                Contradiction   Consistency
+                                                                                                                             Persona 3: I have four sisters
+                                       Policy Gradient                                                                       Persona 4: My favorite color is red
+
+
+Input Message:
+                                                                        N Sampled
+Do you like Taylor Swift’s        Generator              Rollout                                               Evaluator
+                                                                        Responses
+songs ?
+
+
+                                       Policy Gradient
+                                                                                                                             Ground Truth:
+Generated Response:                              I don’t know what you mean                       Human        Naturalness   Of course, I really enjoy country music and I
+Yes, I like her country music .                                                   Reward 1          or                       am a big fan of Taylor Swift.
+                                                  I enjoy Taylor Swift’s song                     0RGHO
+
+
+
+Figure 2: The overall framework of our model, which mainly consists of a generator and an evaluator. The dashed connection
+only appears in the generation process. The ↑ and ↓ denote that the generation of a response is encouraged and discouraged by
+the reward signals respectively.
+
+
+achieve higher accuracy with adversarial training. In con-                                   al. 2019) are usually trained on large-scale datasets like
+trast, no labels are available in the training process to im-                                SNLI (Bowman et al. 2015). The domain adaption problem
+prove the performance of natural language inference.                                         could lead to a performance gap. Therefore, a better dataset
+                                                                                             for our task is the recently released DNLI (Welleck et al.
+Naturalness Module The naturalness module EN is pro-                                         2019), which is in the persona-based dialogue domain.
+posed to distinguish between human responses and model                                          The consistency module EC is not updated in the adver-
+generated ones. As the generator is updating during the                                      sarial training process of EN . Due to the assumption that
+training process, new examples from models are generated.                                    responses from humans are natural, EN can always get pos-
+Therefore, we shall update the EN .                                                          itive examples (the human responses from training data) and
+   It is safe to assume that responses from humans are always                                negative examples (the generated responses from G) during
+more natural than the ones from models. From this observa-                                   the adversarial training process. However, as exemplified in
+tion, we take responses from the training data as positive ex-                               Figure 1, a natural response does not necessarily entail per-
+amples and responses from the generator G as negative ex-                                    sona texts and vice versa. Due to this difference, EC cannot
+amples. EN guides the sequence generator G to predict re-                                    be iteratively updated like EN .
+sponses closer to the examples from the training data, which                                    In addition to exploiting NLI models in dialogue genera-
+is more natural.                                                                             tion, another issue worth exploring is how the performance
+   In more detail, the naturalness module EN is a binary                                     of different NLI signals affects the quality of dialogue gener-
+classifier that takes response Y or Ŷ as input1 and produces                                ation. Thus in our experiments, we apply two NLI classifiers
+a softmax distribution over two classes, indicating whether                                  with performance differences:
+the response is from human (natural) or model (unnatural).
+                                                                                              • Base Model We use the GRU to learn the sentence repre-
+The input is encoded into a vector representation using a
+                                                                                                sentations and then put them into a multilayer perceptron
+bidirectional GRU encoder, which is then fed to a highway
+                                                                                                (MLP) classifier. The MLP has a hidden layer with tanh
+architecture, followed by a fully-connected layer with two-
+                                                                                                activation and a softmax output layer in our experiments.
+class softmax function.
+                                                                                                For training, we use a multi-class cross-entropy loss. In
+   The objective function of EN is to minimize the cross-
+                                                                                                the following sections, we abbreviate this model as Ebase .
+entropy between the ground truth label and the predicted
+probability. And the reward from EN is:                                                       • Finetuned BERT With multilayer bidirectional Trans-
+                                                                                                formers (Vaswani et al. 2017), BERT (Devlin et al. 2018)
+                                        +
+                                  R1 = EN ,                                       (2)           has achieved state-of-the-art results on various natural
+       +
+                                                                                                language understanding tasks, including NLI. We finetune
+where EN is the output probability of Ŷ from the human.                                        the BERTbase model on the DNLI dataset and achieve
+Consistency Module The consistency module EC is an                                              best results compared with several other reported results
+NLI classifier. We introduce this module to detect the con-                                     on this dataset. In the following sections, we abbreviate
+sistency in dialogues by distinguishing {entailment, neu-                                       this model as Ebert .
+tral, controdiction} between generated responses and the                                        Finally, we can get the three-class confidences from the
+persona texts. Recent NLI models (Conneau et al. 2017;                                       output layer of a consistency module. The reward from EC
+Chen et al. 2017; Gong, Luo, and Zhang 2018; Kim et                                          can formulate as:
+    1                                                                                               R2 = maxi Ei − maxj Cj , i, j ∈ {1, 2, ..., |P |}, (3)
+     In our experiments, we found that the way of taking {X, Y }
+as input to EN didn’t bring significant performance improvements                             where E is the confidence for entailment and C is the con-
+in the accuracy of EN , so we choose the more straightforward way.                           fidence for contradiction. Index i (or j) denotes the confi-
+dence is calculated between Ŷ and Pi (or Pj ). This reward          Algorithm 1 Sketch of the training procedure
+is designed to encourage entailment and discourage contra-            Requires: generator Gθ , evaluator EN and EC ,
+diction between Ŷ and P .                                               dialogue corpus S, nli dataset L.
+                                                                      1: Randomly initialize Gθ , EN and EC .
+Reinforcement Learning                                                2: Pretrain Gθ using MLE on S.
+We formalize the persona consistent dialogue generation               3: Pretrain EN using negative samples from Gθ by mini-
+problem as a reinforcement learning task. That is, we train a            mizing the cross-entropy loss.
+generator G to produce a response Ŷ1:t = {y1 , y2 , ..., yt },       4: Pretrain EC on L accordingly.
+where yi represents a word in the vocabulary. At each                 5: for number of training iterations do
+timestep t, the state st is the current produced word                 6:     for G-steps do
+(y1 , y2 , ..., yt−1 ), and the action a is the next selected word    7:         Sample Ŷ from Gθ
+yt . The policy model G(Yt |Y1:t−1 ) defines the probability          8:         for t in 1 : T do
+that selecting the t-th word depending on the previously gen-         9:             Compute Q(ŷt , st−1 ) by Eq. (7)
+erated words, which is the current state.                            10:         Update Gθ via Policy Gradient by Eq. (8)
+Sequence Generator Our generator Gθ takes a form sim-                11:     for teacherforce-steps do
+ilar to Seq2Seq model with attention mechanism. The only             12:         Update Gθ via MLE
+difference is that we prepend persona texts to the input se-         13:     for EN -steps do
+quence, i.e., X = ∀Pi ∈ P ||X, where || denotes the con-
+                                                                     14:         Sample Ŷ from new Gθ and sample Y from S
+catenation. The same strategy is also applied to the genera-
+                                                                     15:         Update EN via cross-entropy loss
+tive model in Zhang et al. (2018).
+                                                                     16: return Gθ
+Reward Estimation In reinforcement learning, the train-
+ing objective is to maximize the accumulated future rewards.
+We encourage the generator to generate responses that are            With rollout policy, the gradient of Eq. (5) can be solved by
+close to human and consistent with the predefined persona.           policy gradient method:
+Based on rewards from the naturalness module and consis-                           T
+tency module, the final reward function is:                                        X
+                                                                      ∇θ J (θ) =         E[ ∇θ logGθ (ŷt |st−1 ) · QG
+                                                                                                                     Eφ (ŷt , st−1 ) ],
+                                                                                                                       θ
+
+              REφ (Ŷ |X, P ) = λR1 + (1 − λ)R2 ,            (4)                   t=1
+where Eφ is our evaluator with the parameter φ. We train                                                                              (8)
+the generator Gθ (yt |Y1:t−1 ) to generate a response from the       and the expectation E can be approximated by sampling
+initial state s0 to maximize its expected final reward:              methods.
+                    XT                                                  When N are large enough, MC search leads to a reason-
+           J (θ) =      Gθ (ŷt |st−1 ) · QG
+                                           Eφ (ŷt , st−1 ),
+                                            θ
+                                                             (5)     able estimate of the sentence rewards. However, this comes
+                   t=1                                               at a high computational cost. When N decreases for the bal-
+       Gθ
+where QEφ (ŷt , st−1 ) is the action-value function at timestep     ance of computational time, the diversity of the sampled re-
+                                                                     sponses are affected, which could lead to a poor estimate.
+t. When there is a finished response Ŷ1:T , the evaluator can       Therefore, we propose a different rollout policy: 1. at step t,
+provide a reward by Eq. (4) for the action-value function:           the model first generates a t words’ subsequence with beam
+            QG
+             Eφ (ŷT , sT −1 ) = REφ (Ŷ1:T |X, P ).
+               θ
+                                                              (6)    search. 2. at step t + 1, the model keeps N different words
+                                                                     with the top probabilities. 3. after step t + 1, the model con-
+Rollout Policy Our evaluator is trained to predict based on
+                                                                     tinues to generate words with a sampling-based method for
+a complete sequence. Thus the reward from Eq. (6) can only
+                                                                     the partially decoded sequences with t + 1 words.
+be used for the final states in a response (the generation of a
+                                                                        We apply this rollout policy for a balance of the computa-
+response must be finished), which will hurt the effectiveness
+                                                                     tional time and the sample diversity. In this way, we can get
+of training the generator.
+                                                                     diverse samples, even when N is relatively small.
+   To evaluate the action-value Q at an intermediate state st
+(t < T), a common strategy is to apply rollout policy, such          Adversarial Training
+as Monte Carlo search, to sample the last T − t words for
+                                                                     As forementioned, the EN needs adversarial training to get
+the partially decoded response Ŷ1:t (Yu et al. 2017; Li et          higher accuracy. Algorithm 1 shows the overall training pro-
+al. 2017; Fan et al. 2018). When applying a rollout policy,          cess of the proposed approach, including the adversarial
+the model keeps sampling words from the generative model             training of EN . In Eq. (8), the ground-truth responses are
+until the decoding is finished. This process is repeated for N       not directly exposed to the generator in the training process.
+times, and the average reward of the sampled responses by            Practically, updating the generator Gθ only using the gradi-
+Eq. (4) is used as the action-value for the state st :               ents from Eq. (8) leads to unstable training. The same issue
+                           N
+                        1 X                                          is also reported in Li et al. (2017). To alleviate this issue,
+ QG  θ
+    Eφ (ŷt+1 , ŝt ) =       REφ (rolloutGi θ (Ŷ1:t+1 )|X, P ).    we follow Sutskever, Vinyals, and Le (2014) and use the
+                        N i=1
+                                                                     Teacher Force strategy to train Gθ , via MLE loss together
+                                                              (7)    with rewards from the evaluator.
+                         Experiments                                     Dialogue Generation approach as RCDG. Considering we
+Datasets                                                                 have two different implementations (Ebase and Ebert ) of the
+                                                                         consistency module EC , we use RCDGbase and RCDGbert
+Persona-Chat We perform persona-based dialogue gener-                    to denote implemented with Ebase and Ebert , respectively.
+ation experiments on the Persona-Chat dataset (Zhang et al.
+2018). The conversations are obtained from crowdworkers                  Experimental Settings
+who were randomly paired and asked to act the part of a
+                                                                         For the generator, both encoder and decoder are two-layer
+given persona. Also, the persona is created by another set
+                                                                         GRU with a hidden size 500. Embeddings of size 300 are
+of crowdworkers. This dataset contains 164,356 utterances
+                                                                         randomly initialized and updated during training. Vocabu-
+in 10,981 dialogues and has a set of 1,155 personas, each
+                                                                         lary size is 18,300, and other tokens are replaced with the
+consisting of four or five persona texts. The testing set con-
+                                                                         UNK token. Encoder and decoder share the same vocabu-
+tains 1,000 dialogues (15,119 utterances) and 200 never seen
+                                                                         laries and embeddings. The model parameters are optimized
+before personas. We set aside 968 dialogues (15,705 utter-
+                                                                         using Adam with an initial learning rate of 0.0003. Learning
+ances) together with its personas from the training set for
+                                                                         rate decay is 0.98. Training minibatch size is 32. We set λ to
+validation. The final data has 10,000/968/1,000 dialogues
+                                                                         0.4 and N to 5. We implement the model in OpenNMT-py.
+for train/validate/test2 .
+   As reported in Zhang et al. (2018), pretraining on larger             Evaluation Metrics
+datasets would yield better results. Thus we use another two
+million input-response pairs from OpenSubtitles to pretrain              Consistency Evaluation First, we evaluate the persona-
+all models in our experiments, and we report this instead.               consistency of different models. Dziri et al. (2019) has
+                                                                         shown that entailment techniques can be used as a sur-
+DNLI The recently released Dialogue Natural Language                     rogate for human judgment in evaluating dialogue consis-
+Inference dataset (Welleck et al. 2019) offers a new domain              tency. Following this work, we employ NLI model to au-
+for NLI models. DNLI mainly consists of utterance-persona                tomatically evaluate the persona-consistency of the gener-
+pairs, which are labeled as entailment (E), neutral (N), or              ated responses. For a generated response Ŷ and a set of
+contradiction (C). This dataset has 310,110/16,500/16,500                persona texts P = {P1 , P2 , ..., Pn }, an NLI model can as-
+pairs for train/validate/test. Due to the length limit, we show          sign an entailment category li to each (Ŷ ,Pi ) pair, where
+other statistics of the DNLI dataset in the appendix.                    li ∈ {E, N, C}. Then we simulate the human evaluator in
+Baselines                                                                deciding the entailment category between Ŷ and P by:
+
+                                                                                                   E         if     E∈L
+                                                                                                   
+In the persona-based dialogue generation area, to the best of
+our knowledge, no previous work has explicitly modeled the                          N LI(Ŷ , P ) = C         elif C ∈ L          (9)
+consistency issue. To evaluate our model, we compared the                                          
+                                                                                                      N       otherwise
+proposed approach with the following strong models:
+• S2SA Seq2Seq is a generative dialogue model with the                   where L = {l1 , l2 , ..., ln }.
+  context attention mechanism (Shang, Lu, and Li 2015).                     Considering we have used BERT as a consistency eval-
+  This is the only model without persona information.                    uator in the training process, it is not fair to use the same
+                                                                         model again for evaluation. Thus we introduce another well-
+• Transformer Transformer is one of the state-of-the-art                 performed NLI model DIIN (Gong, Luo, and Zhang 2018),
+  sequence transduction models (Vaswani et al. 2017). We                 as a third party, to evaluate all the dialogue models.
+  concatenate persona texts to the message as its input.
+• REGS Reward for Every Generation Step is an adversar-                  Dialogue Quality Evaluation Second, the quality of gen-
+  ially trained model with Monte Carlo search for response               erated dialogues is also an essential factor to consider. We
+  generation (Li et al. 2017). We regard persona texts as di-            evaluate the dialogue quality of different models with the
+  alogue context while training this model.                              following metrics:
+• Per-S2S This is a Seq2Seq model that prepends all per-                 • Perplexity Following Zhang et al. (2018), we use perplex-
+  sona texts to the input message (Zhang et al. 2018).                     ity (ppl) to measure the fluency of responses. Lower per-
+                                                                           plexity means better fluency.
+• GPMN Generative Profile Memory Network is a gener-
+  ative model that encodes persona as individual memory                  • Embedding metrics Following Serban et al. (2016),
+  representations in a memory network (Zhang et al. 2018).                 we use Embedding Average (Ave.), Embedding Greedy
+                                                                           (Grd.), and Embedding Extrema (Ext.) as evaluation met-
+• DeepCopy DeepCopy is a hierarchical pointer network,                     rics. These metrics are based on word embeddings, and
+  which extends the pointer-generator network to copy to-                  they measure the relevance of a response regarding a tar-
+  kens from relevant persona texts (Yavuz et al. 2018).                    get response. We use GoogleNews 300D word vectors.
+   To make the following sections more concise, we abbrevi-              • Distinct Following Li et al. (2015), we calculate the to-
+ate the proposed Reinforcement Learning based Consistent                   ken ratios of distinct bigrams (Distinct-2, abbreviated as
+    2
+                                                                           Dst. for convenience). We use this metric to measure how
+      Note that the test set in ConvAI2 is different from the test set     diverse the responses are.
+in Zhang et al. (2018) and is not publicly available.
+                   Model              Dev      Test                                        4
+                                                                                         3.5
+            Welleck      InferSent    85.82    85.68                                                                                  I
+                                                                                           3
+
+
+
+                                                                           Human Score
+          et al. 2019    ESIM         86.31    88.20
+                                                                                         2.5
+            Models       DIIN         86.72    88.84                                       2
+               in        Ebase        80.48    81.26                                     1.5
+           this work     Ebert        87.67    89.14                                       1
+                                                                                                                                      II
+                                                                                         0.5
+Table 1: Accuracy of different models on the DNLI dataset.                                 0
+                                                                                               Entailment   Neutral   Contradiction
+                                                                                                        Model Prediction
+       Model            Entail.(%)        Contr.(%)
+       Human            48.00             1.16∗                    Figure 3: Boxplot of the human scores for consistency ver-
+       S2SA             8.37              12.94                    sus the model prediction categories. Three categories of
+       GPMN             12.98             11.53                    model predictions are on the horizontal axis. With an av-
+       Per-S2S          13.27             12.19                    erage score greater or equal than 2.5, the area I is the score
+       REGS             14.08             10.83                    interval that is likely to be Entailment. Similarly, area II is
+       Transformer      14.20             9.00                     likely to be Contradiction. This figure shows the correlation
+       DeepCopy         14.62             12.17                    between human scoring and model prediction.
+       RCDGbase         18.71 (28.0%)     5.93 (34.1%)
+       RCDGbert         19.07 (30.4%)     5.56 (38.2%)             diction, irrelevant to the input, or grammatically broken; 1:
+                                                                   the response reply to the message, but is not informative; 2:
+Table 2: NLI model-based persona-consistency evaluation            the response is relevant and informative.
+results. Entail. denotes entailment (the higher the better).
+Contr. denotes contradiction (the lower the better). Best re-      Results of Consistency
+sults are in bold, and the percentages in the parentheses are
+improvements regarding baselines’ best results. ∗ We show          Table 1 shows the performance of different models on the
+some contradiction examples of Human in the appendix.              DNLI dataset. The first two rows of results are reprinted
+                                                                   from Welleck et al. (2019). We implement the other three
+                                                                   models. DIIN is the model for persona-consistency evalua-
+Human Evaluations In addition to the automatic evalu-              tion. The last two models (Ebase and Ebert ) are two different
+ations, we also recruit five well-educated human judges to         implementations of the consistency module.
+evaluate the generated responses.                                  Automatic Results We report the model-based persona-
+   Quantitatively evaluating the persona-consistency in gen-       consistency evaluation results in Table 2. With the explicit
+erative models is a non-trivial task for humans. One major         modeling of persona-consistency and reinforcement learn-
+challenge is that the majority of the responses are neutral re-    ing, our approach achieves the highest entailment percent-
+garding the persona texts. As we can see in the first row of       age and a much lower contradiction percentage, compared
+Table 2, even in the test set of Persona-Chat (from Human),        with all other baselines.
+half of the responses are neutral regarding the personas. This       The last two rows in Table 2 are the results of our ap-
+is plausible because many conversations in the real world do       proach, with different implementations of the consistency
+not ground on personas, such as greeting and question. With        module. Both of them outperform other baselines signifi-
+the limited sample size, we did not get statistically signifi-     cantly. Our RCDGbert gets better results, but this comes with
+cant results in human evaluation when quantitatively eval-         higher computational costs, compared with our RCDGbase .
+uating the persona-consistency: the human judges labeled           The results could be interpreted to mean that the NLI signals
+most of the sampled responses neutral.                             work well, regardless of the NLI model structure.
+   Instead, we exploit human evaluations to verify the effec-
+tiveness of the model-based evaluation. Responses from all         Human Validation The human evaluation scores of each
+models are divided into three categories, and we randomly          category are depicted in Figure 3. For the entailment cate-
+sample 150 response-persona pairs from each category. The          gory, more than half of the samples get an average score in
+judges are instructed to give a 5-scale score to each pair:        the interval I, which means three judges agree that the sam-
+0: definitely contradiction; 1: potential contradiction; 2: def-   ple is likely to be entailment or two judges agree and one
+initely neutral; 3: potential entailment; 4: definitely entail-    of them is confident. For the neutral category, most samples
+ment. Note that the judges evaluate samples from each cate-        get an average score of 2, and there are only a few outliers.
+gory (predicted by the DIIN), rather than from each model.         This leads to the overlapping of the boxplot quartile lines.
+   For dialogue quality, the evaluation is conducted follow-       Figure 2 shows that the model-based evaluation is in a rela-
+ing the usual practice. We sample 100 responses from each          tively good agreement with human evaluation. We have done
+model and randomly shuffle them for judges. The five judges        a preliminary experiment in the evaluation of consistency,
+rate each response with a 3-scale criteria: 0: persona contra-     while a full study is beyond the scope of this paper.
+    Model              ppl    Ave.    Grd.    Ext.     Dst.        Model             ppl    Ave.    Dst.    E.(%)    C.(%)
+    DeepCopy           42.8   62.1    43.2    45.1     863         Generator         34.5   63.8    823     13.23    12.08
+    Per-S2S            36.3   61.5    45.1    42.5     719
+                                                                   + EN              32.3   64.8    1078    14.01    11.32
+    S2SA               34.8   59.8    41.9    43.5     473
+                                                                   + Ebase           40.9   60.3    639     16.98    7.52
+    GPMN               34.3   65.3    45.7    43.2     741
+                                                                   + Ebert           41.3   59.9    517     17.13    7.19
+    REGS               33.6   64.3    44.2    44.8     1009
+                                                                   + EN + Ebase      30.2   66.7    1289    18.71    5.93
+    Transformer        28.1   63.4    43.9    43.6     1505
+                                                                   + EN + Ebert      29.9   66.9    1275    19.07    5.56
+    RCDGbase           30.2   66.7    46.9    46.4     1289
+    RCDGbert           29.9   66.9    47.2    46.8     1275               Table 5: Ablation test of different modules.
+
+  Table 3: Automatic results, and Dst. is scaled by 10−4 .             Persona    I’m a 12 years old girl
+                                                                         Input    Hi there! I am age 24, how about you?
+  Model            0          1       2        Avg       K         Transformer    30. I want to be a baseball announcer.
+  S2SA             0.378      0.406   0.216    0.838     0.54           REGS      I’m 30 years old.
+  GPMN             0.250      0.446   0.304    1.054     0.46           GPMN      I am 32 and older than you.
+  Per-S2S          0.224      0.482   0.294    1.068     0.45       DeepCopy      I’m 12 years old.
+  REGS             0.242      0.440   0.318    1.076     0.42             Ours    I am 12 years old.
+  DeepCopy         0.224      0.450   0.326    1.102     0.48          Persona    I only listen to country music
+  Transformer      0.212      0.458   0.330    1.118     0.43            Input    What sort of music do you listen to?
+  RCDGbase         0.182      0.440   0.378    1.196     0.50      Transformer    What kind of music do you like?
+  RCDGbert         0.180      0.436   0.384    1.204     0.47           REGS      I love country. Especially tyler farr swoon.
+                                                                        GPMN      I love rap, Tupac is my favorite. You?
+Table 4: The results of human evaluation for response qual-         DeepCopy      My sort of music pays well.
+ity, together with the Fleiss Kappa (K). The K coefficient                Ours    My favorite is country, what about you?
+between 0.41 and 0.6 means moderate agreement.
+                                                                      Table 6: Sampled dialogues from different models.
+Results of Dialogue Quality
+We first report the automatic evaluation results of dialogue      is improved. Meanwhile, if we directly apply reinforcement
+quality in Table 3. Our methods are the best in the three         learning without the naturalness module, although the con-
+embedding metrics, which indicates that our generated re-         sistency of the generated response is improved, the qual-
+sponses are most relevant to the ground truth. As our model       ity has decreased significantly, as shown in the +Ebase and
+is designed to address naturalness and consistency issues ef-     +Ebert . When we integrate the naturalness module and the
+fectively, these results are within expectation. We notice that   consistency module, the performance achieves the best.
+Transformer gets the best results in perplexity and distinct-2.      Finally, we show some generated examples in Table 6.
+It could be interpreted to mean that Transformer has a better
+language model compared with all other RNN based models.                     Conclusion and Future Work
+This also inspires us to use more advanced sequence models
+as our generator in future work. Except for the Transformer,      In this paper, we consider modeling the persona-consistency
+our methods perform best in these RNN-based models.               in open-domain dialogue generation by exploiting natu-
+   We report the human evaluation results in Table 4. Our         ral language inference. To this end, we cast the task as a
+model has the highest ratio of 2, which means our generated       reinforcement learning problem and leverage natural lan-
+responses are of higher quality. The Transformer also per-        guage inference signals in the deep generative model. We
+forms well in human evaluation, but it gets many 1 points.        demonstrate the effectiveness of our approach in comparison
+One reason could be that this model generates more ques-          with several baselines by experiments on the Persona-Chat
+tions rather than declarative sentences, which makes human        dataset. In the future, we plan to apply our model to larger
+judges feel less informative.                                     scale datasets. Furthermore, we plan to use more advanced
+                                                                  generators in our approach to achieve higher performance.
+Ablation Study
+As the proposed model achieves better performance than                              Acknowledgments
+previous approaches, we conduct an analysis to gain further       The paper is supported by the National Natural Science
+insight on how the integration of different modules helps the     Foundation of China under Grant No.61772153. In addi-
+response generation. We report the results in Table 5.            tion, we want to acknowledge the Heilongjiang Province Art
+   As we can see, the performance of the vanilla gener-           Planning Project 2019C027 and the Heilongjiang Province
+ator is not outstanding. With the help of the adversari-          Social Science Research Project 18TQB100. We also want
+ally trained naturalness module EN , the dialogue quality         to thank all the anonymous reviewers for their comments.
+                        References                                 ceedings of the 2018 Conference on Empirical Methods in
+[2015] Bowman, S. R.; Angeli, G.; Potts, C.; and Manning,          Natural Language Processing, 3865–3878.
+ C. D. 2015. A large annotated corpus for learning natu-          [2016] Serban, I. V.; Sordoni, A.; Bengio, Y.; Courville,
+ ral language inference. In Proceedings of the 2015 Confer-        A. C.; and Pineau, J. 2016. Building end-to-end dialogue
+ ence on Empirical Methods in Natural Language Process-            systems using generative hierarchical neural network mod-
+ ing, 632–642.                                                     els. In AAAI, volume 16, 3776–3784.
+[2017] Chen, Q.; Zhu, X.; Ling, Z.-H.; Wei, S.; Jiang, H.;        [2015] Shang, L.; Lu, Z.; and Li, H. 2015. Neural respond-
+ and Inkpen, D. 2017. Enhanced lstm for natural language           ing machine for short-text conversation. arXiv preprint
+ inference. In Proceedings of the 55th Annual Meeting of the       arXiv:1503.02364.
+ Association for Computational Linguistics (Volume 1: Long        [2019a] Song, H.; Zhang, W.-N.; Cui, Y.; Wang, D.; and Liu,
+ Papers), 1657–1668.                                               T. 2019a. Exploiting persona information for diverse gen-
+[2017] Conneau, A.; Kiela, D.; Schwenk, H.; Barrault, L.;          eration of conversational responses. In Proceedings of the
+ and Bordes, A. 2017. Supervised learning of universal sen-        Twenty-Eighth International Joint Conference on Artificial
+ tence representations from natural language inference data.       Intelligence, IJCAI-19, 5190–5196. International Joint Con-
+ In Proceedings of the 2017 Conference on Empirical Meth-          ferences on Artificial Intelligence Organization.
+ ods in Natural Language Processing, 670–680.                     [2019b] Song, K.; Tan, X.; Qin, T.; Lu, J.; and Liu, T.-Y.
+[2018] Devlin, J.; Chang, M.-W.; Lee, K.; and Toutanova,           2019b. MASS: Masked sequence to sequence pre-training
+ K.     2018.     Bert: Pre-training of deep bidirectional         for language generation. In Chaudhuri, K., and Salakhut-
+ transformers for language understanding. arXiv preprint           dinov, R., eds., Proceedings of the 36th International Con-
+ arXiv:1810.04805.                                                 ference on Machine Learning, volume 97 of Proceedings of
+[2019] Dziri, N.; Kamalloo, E.; Mathewson, K.; and Zaiane,         Machine Learning Research, 5926–5936. Long Beach, Cal-
+ O. R. 2019. Evaluating coherence in dialogue systems using        ifornia, USA: PMLR.
+ entailment. In Proceedings of the 2019 Conference of the         [2014] Sutskever, I.; Vinyals, O.; and Le, Q. V. 2014. Se-
+ North American Chapter of the Association for Computa-            quence to sequence learning with neural networks. In Ad-
+ tional Linguistics: Human Language Technologies, Volume           vances in neural information processing systems, 3104–
+ 1 (Long and Short Papers), 3806–3812.                             3112.
+[2018] Fan, Z.; Wei, Z.; Wang, S.; Liu, Y.; and Huang, X.         [2017] Vaswani, A.; Shazeer, N.; Parmar, N.; Uszkoreit, J.;
+ 2018. A reinforcement learning framework for natural ques-        Jones, L.; Gomez, A. N.; Kaiser, Ł.; and Polosukhin, I. 2017.
+ tion generation using bi-discriminators. In Proceedings of        Attention is all you need. In Advances in neural information
+ the 27th International Conference on Computational Lin-           processing systems, 5998–6008.
+ guistics, 1763–1774.                                             [2015] Vinyals, O., and Le, Q. 2015. A neural conversational
+[2018] Gong, Y.; Luo, H.; and Zhang, J. 2018. Natural              model. arXiv preprint arXiv:1506.05869.
+ language inference over interaction space. In International      [2019] Welleck, S.; Weston, J.; Szlam, A.; and Cho, K. 2019.
+ Conference on Learning Representations.                           Dialogue natural language inference. In Proceedings of the
+[2019] Kim, S.; Hong, J.-H.; Kang, I.; and Kwak, N. 2019.          57th Annual Meeting of the Association for Computational
+ Semantic sentence matching with densely-connected recur-          Linguistics, 3731–3741. Florence, Italy: Association for
+ rent and co-attentive information. In AAAI.                       Computational Linguistics.
+[2015] Li, J.; Galley, M.; Brockett, C.; Gao, J.; and Dolan, B.   [2018] Wu, L.; Tian, F.; Qin, T.; Lai, J.; and Liu, T.-Y. 2018.
+ 2015. A diversity-promoting objective function for neural         A study of reinforcement learning for neural machine trans-
+ conversation models. arXiv preprint arXiv:1510.03055.             lation. In Proceedings of the 2018 Conference on Empirical
+[2016a] Li, J.; Galley, M.; Brockett, C.; Spithourakis, G. P.;     Methods in Natural Language Processing, 3612–3621.
+ Gao, J.; and Dolan, B. 2016a. A persona-based neural con-        [2018] Yavuz, S.; Rastogi, A.; Chao, G.-l.; and Hakkani-Tür,
+ versation model. arXiv preprint arXiv:1603.06155.                 D. 2018. Deepcopy: Grounded response generation with hi-
+[2016b] Li, J.; Monroe, W.; Ritter, A.; Jurafsky, D.; Galley,      erarchical pointer networks. Advances in neural information
+ M.; and Gao, J. 2016b. Deep reinforcement learning for            processing systems.
+ dialogue generation. In Proceedings of the 2016 Confer-          [2018] Yin, Q.; Zhang, Y.; Zhang, W.-N.; Liu, T.; and Wang,
+ ence on Empirical Methods in Natural Language Process-            W. Y. 2018. Deep reinforcement learning for chinese zero
+ ing. Austin, Texas: Association for Computational Linguis-        pronoun resolution. In Proceedings of the 56th Annual Meet-
+ tics.                                                             ing of the Association for Computational Linguistics, 569–
+[2017] Li, J.; Monroe, W.; Shi, T.; Jean, S.; Ritter, A.; and      578.
+ Jurafsky, D. 2017. Adversarial learning for neural dia-          [2017] Yu, L.; Zhang, W.; Wang, J.; and Yu, Y. 2017. Seqgan:
+ logue generation. In Proceedings of the 2017 Conference on        Sequence generative adversarial nets with policy gradient. In
+ Empirical Methods in Natural Language Processing, 2157–           Thirty-First AAAI Conference on Artificial Intelligence.
+ 2169.                                                            [2018] Zhang, S.; Dinan, E.; Urbanek, J.; Szlam, A.; Kiela,
+[2018] Li, Z.; Jiang, X.; Shang, L.; and Li, H. 2018. Para-        D.; and Weston, J. 2018. Personalizing dialogue agents: I
+ phrase generation with deep reinforcement learning. In Pro-       have a dog, do you have pets too? In Proceedings of the
+ 56th Annual Meeting of the Association for Computational
+ Linguistics (Volume 1: Long Papers), 2204–2213.
+[2019] Zhu, Q.; Cui, L.; Zhang, W.-N.; Wei, F.; and Liu, T.
+ 2019. Retrieval-enhanced adversarial training for neural re-
+ sponse generation. In Proceedings of the 57th Annual Meet-
+ ing of the Association for Computational Linguistics, 3763–
+ 3773.
+
