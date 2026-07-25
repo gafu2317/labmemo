@@ -109,25 +109,21 @@ def _fallback_plan(
         )
 
     if remaining == 1:
-        preferred_move = "future_continuity"
         response_strategy = "close"
     elif last_action == "raise_concern":
-        preferred_move = "concern_aligned_commitment"
         response_strategy = "acknowledge_concern"
-    elif current_turn == 1:
-        preferred_move = "identity_value"
-        response_strategy = "answer_first"
     else:
-        preferred_move = "enacted_commitment"
         response_strategy = "answer_first"
-    move, evidence = _select_available_evidence(preferred_move, inventory or {}, state)
+
+    # LLM出力を解析できない場合、対話との関連性をコードだけでは判定できない。
+    # 無関係な証拠を自動挿入するより、事実回答だけにフォールバックする。
     return TurnPlan(
         turn_goal="close" if response_strategy == "close" else "appeal",
-        move=move,
+        move="no_supported_signal",
         response_strategy=response_strategy,
-        evidence_quote=evidence.get("quote") if evidence else None,
-        key_message=evidence.get("summary", "") if evidence else "",
-        evidence_summary=evidence.get("summary", "") if evidence else "",
+        evidence_quote=None,
+        key_message="",
+        evidence_summary="",
         ask_slot=None,
         owner_concern="unknown",
     )
@@ -162,9 +158,12 @@ def _apply_plan_constraints(
         plan.response_strategy = "answer_first"
 
     if inventory is not None:
-        evidence = _find_inventory_evidence(plan.move, plan.evidence_quote, inventory)
-        if evidence is None:
-            plan.move, evidence = _select_available_evidence(plan.move or "", inventory, state)
+        # no_supported_signal は「関連する証拠を使わない」というPlannerの判断。
+        # 在庫が残っていても別の証拠を自動補充しない。
+        if plan.move == "no_supported_signal":
+            evidence = None
+        else:
+            evidence = _find_inventory_evidence(plan.move, plan.evidence_quote, inventory)
         if evidence:
             plan.evidence_quote = evidence["quote"]
             plan.evidence_summary = evidence["summary"]
@@ -188,22 +187,6 @@ def _find_inventory_evidence(
         if quote == item.get("quote"):
             return item
     return None
-
-
-def _select_available_evidence(
-    preferred_move: str,
-    inventory: dict[str, list[dict[str, str]]],
-    state: dict,
-) -> tuple[str, dict[str, str] | None]:
-    used = set(state.get("used_evidence_quotes", []))
-    ordered = [preferred_move] + [move for move in MOVES if move != preferred_move]
-    for move in ordered:
-        if move == "no_supported_signal":
-            continue
-        for item in inventory.get(move, []):
-            if item.get("quote") not in used:
-                return move, item
-    return "no_supported_signal", None
 
 
 def build_dialogue_state(

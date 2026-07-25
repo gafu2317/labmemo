@@ -151,10 +151,12 @@ class HybridLandlordTests(unittest.TestCase):
         }
         concern_plan = _fallback_plan("proposed", concern_state, inventory)
         final_plan = _fallback_plan("proposed", final_state, inventory)
-        self.assertEqual(concern_plan.move, "concern_aligned_commitment")
+        self.assertEqual(concern_plan.move, "no_supported_signal")
         self.assertEqual(concern_plan.response_strategy, "acknowledge_concern")
-        self.assertEqual(final_plan.move, "future_continuity")
+        self.assertIsNone(concern_plan.evidence_quote)
+        self.assertEqual(final_plan.move, "no_supported_signal")
         self.assertEqual(final_plan.response_strategy, "close")
+        self.assertIsNone(final_plan.evidence_quote)
         self.assertEqual(_fallback_plan("baseline", final_state).phase, "closing")
 
         unconstrained = TurnPlan(

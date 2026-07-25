@@ -1,0 +1,49 @@
+# V3 話法再現監査
+
+生成された借り手発話が、指定話法をどの程度再現しているかを監査します。
+効果や文章の好みは評価せず、構造の再現と記事への忠実性だけを判定してください。
+
+## 借り手の記事
+
+{article}
+
+## 話法
+
+- ID: {method_id}
+- 名称: {method_name}
+- 定義: {method_description}
+
+## 計画
+
+```json
+{plan_json}
+```
+
+## 判定規則
+
+- `slot_realized` は、計画で空でない各構成要素の意味が最終発話に現れているか
+- `ordered` は、現れた構成要素が話法で定めた順序になっているか
+- `grounded` は、発話中の事実・成果・因果関係が記事または大家発話に根拠づけられるか
+- 計画で欠落扱いの要素を創作して埋めていたら `grounded=false`
+- `available_slots_realized` は、計画上利用可能だった全要素が最終発話に実現した場合だけtrue。順序は `ordered` で別に判定する
+- `canonical_method_complete` は、話法の必須構成要素がすべて利用可能で、すべて順序どおり実現した場合だけtrue
+- `missing_slots` が1件でもあるPREP・STAR・AIDAは `canonical_method_complete=false`
+- Plainは `ordered=true` とし、選択した根拠が反映されたかだけを見る
+- Plainの `canonical_method_complete` は話法完全成立の対象外なのでnull
+
+## 出力形式
+
+JSONのみを出力してください。
+
+```json
+{
+  "slot_realized": {
+    "構成要素": true
+  },
+  "ordered": true,
+  "grounded": true,
+  "available_slots_realized": true,
+  "canonical_method_complete": true,
+  "notes": "不成立または忠実性上の問題を短く記述。問題がなければ空文字"
+}
+```

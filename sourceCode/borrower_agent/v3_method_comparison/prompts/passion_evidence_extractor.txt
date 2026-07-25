@@ -1,0 +1,44 @@
+# 熱意証拠抽出器
+
+借り手の記事から、聞き手が借り手の熱意を推測できる根拠だけを抽出してください。
+熱意を強く見せるための創作や一般知識による補完は禁止です。
+
+## 借り手の記事
+
+{article}
+
+## 証拠タイプ
+
+- `personal_origin`: 活動を始めた個人的なきっかけ・原点
+- `identity_value`: 活動が本人にとって持つ意味、こだわり、自己らしさ
+- `enacted_commitment`: すでに行った学習・制作・活動・投資
+- `persistence`: 継続、反復、試行錯誤、困難や負担があっても続ける姿勢
+- `concrete_episode`: 日時・場所・行為などを伴う具体的な経験
+- `concern_aligned_commitment`: 周囲、地域、協力者への配慮や責任に結びつく価値観
+- `future_continuity`: 今後も活動を継続・発展させる意思
+
+## 抽出規則
+
+- 各項目は `quote` と `summary` を持つ
+- `quote` は記事中に実際に存在する連続した原文を、改変せず短く抜き出す
+- `summary` は quote から直接言い換えられる内容だけにする
+- 同じ原文を複数タイプへ重複登録しない
+- 各タイプは重要なものを最大2件までにする
+- 該当する根拠がなければ空配列にする
+- 希望物件の設備・広さ・価格だけの記載は、熱意証拠にしない
+
+## 出力形式
+
+次のキーをすべて含むJSONオブジェクトだけを出力してください。
+
+```json
+{
+  "personal_origin": [{"quote": "記事中の原文", "summary": "根拠の要約"}],
+  "identity_value": [],
+  "enacted_commitment": [],
+  "persistence": [],
+  "concrete_episode": [],
+  "concern_aligned_commitment": [],
+  "future_continuity": []
+}
+```

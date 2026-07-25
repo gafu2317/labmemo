@@ -1,0 +1,38 @@
+property_id: property01_kuwana
+target_case: case01_ceramic_atelier
+
+# 対話行為は固定し、実際の文面だけを大家LLMが生成する。
+# Baseline / Proposed の両条件で同じシナリオを使う。
+landlord_scenario:
+  opening_action:
+    act: ask_usage
+    topic: intended_use
+    instruction: "借り手が物件をどのように使いたいか、質問を1つする。"
+  response_steps:
+    - act: ask_operation
+      topic: kiln_and_workflow
+      instruction: "ガス窯を含め、この物件でどのように作品を制作したいか、具体的な使い方を1つ尋ねる。"
+    - act: raise_concern
+      topic: noise_and_smoke
+      instruction: "周辺が住宅街であるため、ガス窯の音や煙が近隣に影響しないか心配していると短く伝える。質問はしない。"
+    - act: ask_operation
+      topic: storage_and_shipping
+      instruction: "制作以外に必要な作業や保管スペースがあるか、質問を1つする。"
+    - act: close
+      topic: end_conversation
+      instruction: "新しい質問や次アクションを出さず、借り手の話を聞いたことだけを中立的に短く伝えて終える。"
+
+# 完全適合・完全不適合にならないための実験設計メモ。LLMには渡さない。
+experimental_profile:
+  attractive_features:
+    - "離れ25㎡をアトリエとして利用できる"
+    - "借り手の希望地域である桑名市にある"
+    - "梱包材の保管や発送作業に使える広さがある"
+  concerns:
+    - "住宅街でのガス窯の音と煙"
+    - "煙突工事と大容量ガスボンベが建物に与える影響"
+  unknowns:
+    - "離れに煙突を安全に設置できるか"
+    - "実際の窯の音量と煙の程度"
+  alternatives:
+    - "ガス窯の設置可否とは分けて、離れを成形・乾燥・保管用の作業場として検討できる"

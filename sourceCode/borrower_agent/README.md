@@ -9,6 +9,7 @@
 |---|---|---|
 | `v1_fixed_emotion` | 感情表現指示の有無（phase固定の感情レシピ） | FIT2026 時点の手法 |
 | `v2_adaptive_planner` | 記事中の個人的価値・既遂行行動・継続姿勢など、検証済みの熱意証拠を大家の対話行為に応じて選択 | 次実験。Baseline=熱意表現の特別指示なし、Proposed=根拠に基づく熱意伝達。大家はYAMLで行為を固定し文面のみLLM生成 |
+| `v3_method_comparison` | PREP・STAR・AIDA等の既存話法を記事に忠実に再現できるか、情報豊富度（小・中・大）との交互作用を比較 | 4話法 × 3情報条件。再現性と対話効果を分けて評価 |
 
 ## ディレクトリ構成
 
@@ -25,8 +26,16 @@ borrower_agent/
 │   ├── gpts/                   # FIT 用 Custom GPTs 資産
 │   ├── runs/
 │   └── 設計書.md
-└── v2_adaptive_planner/        # 動的発話構成版
-    ├── scenarios/             # v2専用の大家対話行為と物件設計メモ
+├── v2_adaptive_planner/        # 動的発話構成版
+│   ├── scenarios/             # v2専用の大家対話行為と物件設計メモ
+│   ├── src/
+│   ├── prompts/
+│   ├── scripts/
+│   ├── runs/
+│   └── 設計書.md
+└── v3_method_comparison/       # 既存話法 × 記事情報豊富度
+    ├── article_variants/       # 研究者が固定した small / medium / large
+    ├── scenarios/
     ├── src/
     ├── prompts/
     ├── scripts/
@@ -44,6 +53,14 @@ python scripts/run_experiment.py --all-cases --conditions baseline,proposed
 
 cd ../v2_adaptive_planner
 python scripts/run_experiment.py --all-cases --conditions baseline,proposed
+
+cd ../v3_method_comparison
+python scripts/run_experiment.py \
+  --cases case01_ceramic_atelier \
+  --methods plain,prep,star,aida \
+  --information-levels small,medium,large \
+  --repetitions 3 \
+  --order-seed 42
 ```
 
 ケース・物件は `../shared/data/` を参照する。ログは各版の `runs/` に保存される。

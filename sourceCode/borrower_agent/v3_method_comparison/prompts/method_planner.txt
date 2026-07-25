@@ -1,0 +1,67 @@
+# V3 話法計画器
+
+あなたは、借り手の記事だけを根拠として、指定された既存話法の構成を計画します。
+発話本文は書かず、各構成要素に割り当てる記事原文をJSONで返してください。
+
+## 借り手の記事
+
+{article}
+
+## 検証済みの熱意証拠在庫
+
+```json
+{passion_evidence_inventory}
+```
+
+## 今回の話法
+
+- ID: {method_id}
+- 名称: {method_name}
+- 分野: {method_domain}
+- 定義: {method_description}
+
+### 構成要素
+
+{method_slots}
+
+## 対話の目的と境界
+
+- 借り手が大家へ連絡し、本人からさらに話を聞きたいと思ってもらうきっかけを作る
+- 条件交渉・契約詳細・大家への強引な説得は行わない
+- 大家の直前の質問または懸念への回答を最優先する
+- 記事にない事実、成果、因果関係、能力、配慮、大家の利益を作らない
+- 話法の枠を埋めるための創作は禁止する
+
+## 計画規則
+
+1. `method_slots` のキーは指定された構成要素をすべて含める
+2. 根拠がある要素は、記事中に連続して存在する短い原文を `quote` へコピーする
+3. 根拠がない要素は `quote` と `purpose` を空文字にし、キーを `missing_slots` に加える
+4. 同じ引用を複数要素へ割り当てない。ただしPREPの `point_restated` だけは、最初の `point` と同じ引用をコピーし、その意味を言い換えて結べる
+5. すでに使用した引用は再利用しない
+6. 直前の話題と無関係なら、在庫があっても `apply_method=false` とする
+7. 大家が懸念を示した場合、記事に直接関係する回答根拠がなければ話法を無理に適用しない
+8. 最終ターンでは新しい話題・質問・次アクションを増やさない。AIDAは `apply_method=false` としActionを出さない
+9. AIDAのActionだけは引用不要。ただし面談・内見・契約を迫らず、日程も尋ねない
+10. Plainでは構造効果を加えず、関連する根拠を最大1件だけ選ぶ
+
+## 出力形式
+
+JSONのみを出力してください。
+
+```json
+{
+  "turn_goal": "answer | appeal | reassure | close",
+  "response_strategy": "answer_first | acknowledge_concern | close",
+  "apply_method": true,
+  "method_slots": {
+    "指定された構成要素": {
+      "quote": "記事原文。AIDAのactionまたは根拠なしの場合は空文字",
+      "purpose": "この構成要素として何を伝えるか。根拠なしの場合は空文字"
+    }
+  },
+  "missing_slots": [],
+  "ask_slot": null,
+  "owner_concern": "unknown | cost | renovation | duration | other"
+}
+```
